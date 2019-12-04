@@ -1,6 +1,6 @@
 #include <SparkFunSX1509.h>
 
-/* code to power on iridium unit,
+/*  prototype/test code to power on iridium unit,
  *  and enable all communication buses.
  *  requires sx1509 lib, as SAMD21 mcu communicates with iridum through sx1509 chip via i2c.
  *  refer to Iridium User Guide for correct order of operations, and pin numbers.
