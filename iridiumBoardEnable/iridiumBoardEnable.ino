@@ -1,4 +1,4 @@
-  #include <SparkFunSX1509.h>
+#include <SparkFunSX1509.h>
 
 /* code to power on iridium unit,
  *  and enable all communication buses.
@@ -13,6 +13,7 @@
  * these will be used for data i/o (i.e., AT commands) to Iridium.
  * refer to Iridium user guide.
  */
+ 
 const byte SX1509_ADDRESS = 0x3E;
 SX1509 sx1509;
 // pin 1 corresponds to 8V_EN; enable after PWR_EN, and before 3959_EN (boost; pin 2).
@@ -31,7 +32,7 @@ void setup() {
   delay(500);
   Serial1.begin(9600);
   Serial.begin(9600);
-  // put your setup code here, to run once:
+    // enable all required pins, in correct order
   sx1509.begin(SX1509_ADDRESS);
   sx1509.pinMode(fiveV_EN,OUTPUT);
   sx1509.digitalWrite(fiveV_EN,HIGH);
@@ -44,46 +45,51 @@ void setup() {
   sx1509.pinMode(eightV_EN,OUTPUT);
   sx1509.digitalWrite(eightV_EN,HIGH);
   delay(500);
+    // enable iridium bus, and RS232 bus.
   sx1509.pinMode(IR_BUS,OUTPUT);
   sx1509.digitalWrite(IR_BUS,HIGH);
   delay(500);
   pinMode(RS232_BUS,OUTPUT);
-  digitalWrite(RS232_BUS,LOW);
+  digitalWrite(RS232_BUS,HIGH);
 
   delay(200);
   pinMode(13,OUTPUT);
-
+  digitalWrite(13,HIGH);
   delay(500);
 }
 
 void loop() {
-  Serial1.write("AT\r\n");
-  Serial.write("AT\r\n");
-  /*
-  if(Serial.available() > 0) {
-    Serial.println("TES:");
-    while(Serial.available() > 0) {
-      Serial.print(Serial.read());
-    }
-  }
-  if(Serial1.available() > 0) {
+  /* test commands:
+   *  send:         receive:
+   *  AT\r\n        OK\r\n
+   *  AT+CSQ\r\n    CSQ: [0-5]\r\n
+   *  
+   */
+  Serial1.write("AT+CSQ\r\n");
+  delay(2000);
+/*  if(Serial1.available() > 0) {
     Serial1.println("RS232:");
     while(Serial1.available() > 0) {
-      Serial1.println(Serial1.read());
+      Serial.println(Serial1.read());
     }
-  }
+  }*/
+
+  /* note:  for Arduino Zero (SAMD21 chip)
+   * use SerialUSB.print() to print to Arduino IDE serial monitor.
+   * I don't know why, but it works.
   */
-  
+  // if iridium is responding, print to serial monitor
   if(Serial1.available() > 0) {
     digitalWrite(13,HIGH);
     delay(1000);
     digitalWrite(13,LOW);
     while(Serial1.available() > 0) {
-      int c = Serial1.read();
-      Serial.print(c);
+      char c = Serial1.read();
+      SerialUSB.print(c);
+      SerialUSB.print(' ');
     }
-  }
-    delay(2000);
+    SerialUSB.print('\n');
+  }/**/
 
   // put your main code here, to run repeatedly:
 
