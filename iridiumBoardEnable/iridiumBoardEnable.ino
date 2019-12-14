@@ -1,17 +1,19 @@
-#include <SparkFunSX1509.h>
+ #include <SparkFunSX1509.h>
 
-/* code to power on iridium unit,
+/* code to power on iridium 9523 unit,
  *  and enable all communication buses.
- *  requires sx1509 lib, as SAMD21 mcu communicates with iridum through sx1509 chip via i2c.
+ *  requires sx1509 lib, as our SAMD21 mcu communicates with iridum through sx1509 chip via i2c.
  *  refer to Iridium User Guide for correct order of operations, and pin numbers.
  * 
  */
 
 /*
  * note:  samd21 has Serial1 and Serial.
- * one goes to TES bus, one goes to Iridium and to RS232 (if enabled).
+ * Serial goes to TES bus, and Serial1 goes to Iridium and/or to RS232 (if enabled).
  * these will be used for data i/o (i.e., AT commands) to Iridium.
- * refer to Iridium user guide.
+ *  
+ *  To output responses to the Arduino IDE Serial Monitor, call SerialUSB.print(str).
+ *  
  */
  
 const byte SX1509_ADDRESS = 0x3E;
@@ -20,8 +22,9 @@ SX1509 sx1509;
 // pins 0 and 13 on the sx1509 are connect to Iridium's 5V_EN and PWR_EN.
 // 5V_EN must be enabled before PWR_EN.
 // enable by sending high signal through sx1509.digitalWrite().
+
 const int fiveV_EN = 0; 
-const int fiveV_ISENSE = 1; // SAMD21 analog
+const int fiveV_ISENSE = 1; // SAMD21, analog pin
 const int eightV_EN = 1;
 const int RS232_BUS = 7;  // SAMD21, not SX1509
 const int IR_BUS = 9; 
@@ -30,9 +33,13 @@ const int EN_TES_BUS  = 16;
 
 void setup() {
   delay(500);
-  Serial1.begin(9600);
-  Serial.begin(9600);
-    // enable all required pins, in correct order
+  /* if communicating with Iridium through RS-232 port, 
+   *  comment out Serial1.begin(9600);
+   */
+  //Serial1.begin(9600);    // Iridium/RS232
+  //Serial.begin(9600);     // TES adapter
+  
+    // enable all required pins, in correct order:
   sx1509.begin(SX1509_ADDRESS);
   sx1509.pinMode(fiveV_EN,OUTPUT);
   sx1509.digitalWrite(fiveV_EN,HIGH);
@@ -56,6 +63,7 @@ void setup() {
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
   delay(500);
+
 }
 
 void loop() {
@@ -65,20 +73,14 @@ void loop() {
    *  AT+CSQ\r\n    CSQ: [0-5]\r\n
    *  
    */
-  Serial1.write("AT+CSQ\r\n");
-  delay(2000);
-/*  if(Serial1.available() > 0) {
-    Serial1.println("RS232:");
-    while(Serial1.available() > 0) {
-      Serial.println(Serial1.read());
-    }
-  }*/
 
-  /* note:  for Arduino Zero (SAMD21 chip)
-   * use SerialUSB.print() to print to Arduino IDE serial monitor.
-   * I don't know why, but it works.
-  */
-  // if iridium is responding, print to serial monitor
+// commented out, so that we can write through the RS232 port.
+// 
+  //Serial1.write("AT\r\n");
+  //delay(2000);
+
+  /* 
+  // if iridium is responding, print to serial monitor:
   if(Serial1.available() > 0) {
     digitalWrite(13,HIGH);
     delay(1000);
@@ -90,7 +92,5 @@ void loop() {
     }
     SerialUSB.print('\n');
   }/**/
-
-  // put your main code here, to run repeatedly:
 
 }
