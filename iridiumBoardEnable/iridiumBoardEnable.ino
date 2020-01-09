@@ -1,4 +1,4 @@
- #include <SparkFunSX1509.h>
+#include <SparkFunSX1509.h>
 
 /* code to power on iridium 9523 unit,
  *  and enable all communication buses.
@@ -29,18 +29,21 @@ const int eightV_EN = 1;
 const int RS232_BUS = 7;  // SAMD21, not SX1509
 const int IR_BUS = 9; 
 const int PWR_EN = 13;
-const int EN_TES_BUS  = 16;
+const int EN_TES_BUS  = 11;
 
 void setup() {
   delay(500);
   /* if communicating with Iridium through RS-232 port, 
    *  comment out Serial1.begin(9600);
    */
-  //Serial1.begin(9600);    // Iridium/RS232
+  //Serial1.begin(9600);    // Iridium bus
   //Serial.begin(9600);     // TES adapter
   
     // enable all required pins, in correct order:
+  pinMode(28,OUTPUT);
+  digitalWrite(28,LOW);
   sx1509.begin(SX1509_ADDRESS);
+  delay(500);
   sx1509.pinMode(fiveV_EN,OUTPUT);
   sx1509.digitalWrite(fiveV_EN,HIGH);
   delay(500);
@@ -49,9 +52,9 @@ void setup() {
   sx1509.pinMode(PWR_EN,OUTPUT);
   sx1509.digitalWrite(PWR_EN,HIGH);
   delay(500);
-  sx1509.pinMode(eightV_EN,OUTPUT);
-  sx1509.digitalWrite(eightV_EN,HIGH);
-  delay(500);
+  //sx1509.pinMode(eightV_EN,OUTPUT);
+  //sx1509.digitalWrite(eightV_EN,HIGH);
+  //delay(500);
     // enable iridium bus, and RS232 bus.
   sx1509.pinMode(IR_BUS,OUTPUT);
   sx1509.digitalWrite(IR_BUS,HIGH);
@@ -59,11 +62,12 @@ void setup() {
   pinMode(RS232_BUS,OUTPUT);
   digitalWrite(RS232_BUS,HIGH);
 
-  delay(200);
+  delay(500);
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
   delay(500);
-
+  SerialUSB.println("ready");
+  delay(500);
 }
 
 void loop() {
@@ -76,21 +80,36 @@ void loop() {
 
 // commented out, so that we can write through the RS232 port.
 // 
-  //Serial1.write("AT\r\n");
-  //delay(2000);
 
-  /* 
+/*
+  //Serial1.write("AT\r\n");
+   
   // if iridium is responding, print to serial monitor:
   if(Serial1.available() > 0) {
+    blink();
+    while(Serial1.available() > 0) {
+      SerialUSB.print((char)Serial1.read());
+    }
+    SerialUSB.print('\n');
+    delay(10);
+  }
+
+  // from arduino serial monitor (Tools > Serial Monitor),
+  //we can send messages to the iridium.
+  if(SerialUSB.available() > 0) {
+    while(SerialUSB.available() > 0) {
+      Serial1.write(SerialUSB.read());
+    }
+    Serial1.write("\r\n");
+  }
+  delay(2000);
+
+  /**/
+
+}
+
+void blink() {
     digitalWrite(13,HIGH);
     delay(1000);
     digitalWrite(13,LOW);
-    while(Serial1.available() > 0) {
-      char c = Serial1.read();
-      SerialUSB.print(c);
-      SerialUSB.print(' ');
-    }
-    SerialUSB.print('\n');
-  }/**/
-
 }
