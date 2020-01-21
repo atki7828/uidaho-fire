@@ -1,3 +1,7 @@
+#include <Adafruit_NeoPixel.h>
+
+
+
 #include <SparkFunSX1509.h>
 
 /* code to power on iridium 9523 unit,
@@ -13,7 +17,7 @@
  * these will be used for data i/o (i.e., AT commands) to Iridium.
  *  
  *  To output responses to the Arduino IDE Serial Monitor, call SerialUSB.print(str).
- *  
+ *
  */
  
 const byte SX1509_ADDRESS = 0x3E;
@@ -30,18 +34,20 @@ const int RS232_BUS = 7;  // SAMD21, not SX1509
 const int IR_BUS = 9; 
 const int PWR_EN = 13;
 const int EN_TES_BUS  = 11;
+const int PIXELS = 12;  //SAMD21 pin
+
+Adafruit_NeoPixel strip(4, PIXELS, NEO_RGB + NEO_KHZ800);
 
 void setup() {
+  InitLED();
   delay(500);
   /* if communicating with Iridium through RS-232 port, 
    *  comment out Serial1.begin(9600);
-   */
-  //Serial1.begin(9600);    // Iridium bus
+   **/
+  Serial1.begin(9600);    // Iridium bus
   //Serial.begin(9600);     // TES adapter
   
     // enable all required pins, in correct order:
-  pinMode(28,OUTPUT);
-  digitalWrite(28,LOW);
   sx1509.begin(SX1509_ADDRESS);
   delay(500);
   sx1509.pinMode(fiveV_EN,OUTPUT);
@@ -66,8 +72,6 @@ void setup() {
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
   delay(500);
-  SerialUSB.println("ready");
-  delay(500);
 }
 
 void loop() {
@@ -78,10 +82,9 @@ void loop() {
    *  
    */
 
-// commented out, so that we can write through the RS232 port.
+// comment out everything to write through the RS232 port.
 // 
 
-/*
   //Serial1.write("AT\r\n");
    
   // if iridium is responding, print to serial monitor:
@@ -109,7 +112,29 @@ void loop() {
 }
 
 void blink() {
-    digitalWrite(13,HIGH);
-    delay(1000);
-    digitalWrite(13,LOW);
+  digitalWrite(13,LOW);
+  delay(100);
+  digitalWrite(13,HIGH);
+}
+
+void InitLED() {
+  strip.begin();
+  /*
+   * to control LEDs, use strip.setPixelColor(LEDnum,R,G,B);
+   * LEDnum = which LED to light (0 - 3)
+   * RGB are red/green/blue values from 0 - 255.
+   * note:  255 is reeaally bright.
+   */
+   /*
+   strip.setPixelColor(0,32,0,32);
+   strip.setPixelColor(1,32,32,0);
+   strip.setPixelColor(2,0,32,0);
+   strip.setPixelColor(3,0,32,32);
+   */
+   
+  for(int i = 0; i < 4; i++) {
+    strip.setPixelColor(i,0,0,0);
+  }
+  
+  strip.show();
 }
