@@ -44,7 +44,7 @@ void setup() {
   /* if communicating with Iridium through RS-232 port, 
    *  comment out Serial1.begin(9600);
    **/
-  Serial1.begin(9600);    // Iridium bus
+  //Serial1.begin(9600);    // Iridium bus
   //Serial.begin(9600);     // TES adapter
   
     // enable all required pins, in correct order:
@@ -86,7 +86,8 @@ void loop() {
 // 
 
   //Serial1.write("AT\r\n");
-   
+
+   /*
   // if iridium is responding, print to serial monitor:
   if(Serial1.available() > 0) {
     blink();
