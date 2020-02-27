@@ -6,7 +6,7 @@
 import serial
 import re
 import time
-#from threading import Thread
+import threading
 
 '''
     note:  iridium 9523 has autobaud.
@@ -16,34 +16,49 @@ import time
 
 print "enter AT command."
 print "type \'exit\' to exit"
-print "type \'check\' to check for new messages\n"
-iridium = serial.Serial("/dev/ttyS0",baudrate=9600,timeout=5)
+# on pi 2 (in the case),
+# the serial output is /dev/ttyAMA0.
+# on pi zero, it is /dev/ttyS0.
+# if plugged into USB port, it's probably /dev/ttyUSB0.
+#iridium = serial.Serial("/dev/ttyS0",baudrate=19200,timeout=5)
+iridium = serial.Serial("/dev/ttyAMA0",baudrate=19200,timeout=5)
 #iridium = serial.Serial("/dev/ttyUSB0",baudrate=19200,timeout=5)
 
 iridium.reset_input_buffer()
 
+kill_threads = False
+
 def WriteCommand():
-    command = raw_input("Enter command: ")
+    global kill_threads
+    command = raw_input("> ")
     if(command == 'exit'):
+        kill_threads = True
         exit()
-    if(command == 'check'):
-        CheckForMessages()
     else:
         iridium.write(command + "\r\n")
 
 def CheckForMessages():
-    iridium.flush()
-    response = "" 
-    while(iridium.in_waiting):
-        response += iridium.read()
-    if(response != "" and re.search('[^\r\n]',response)): 
-        print "raw: " + repr(response)
-        print "escaped: " + response + '\n'
+    global kill_threads
+    while 1:
+        if(kill_threads):
+            break
+        if(iridium.in_waiting):
+            print("\n")
+            time.sleep(0.5)
+            response = "" 
+            while(iridium.in_waiting):
+                response += iridium.read()
+            if(response != "" and re.search('[^\r\n]',response)): 
+                print "raw: " + repr(response)
+                print "escaped: " + response + '\n'
+    iridium.close()
+    print("thread killed")
 
+check = threading.Thread(target=CheckForMessages)
+check.start()
 
 while 1:
     WriteCommand()
-    #Thread(target = CheckForMessages()).start()
 
     '''
     command = raw_input("Enter AT Command: ")
