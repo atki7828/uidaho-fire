@@ -29,7 +29,8 @@ SX1509 sx1509;
 
 const int fiveV_EN = 0; 
 const int fiveV_ISENSE = 1; // SAMD21, analog pin
-const int eightV_EN = 1;
+const int eightV_EN = 1;  // enable before BOOST_EN
+const int BOOST_EN = 3; 
 const int RS232_BUS = 7;  // SAMD21, not SX1509
 const int IR_BUS = 9; 
 const int PWR_EN = 13;
@@ -49,29 +50,35 @@ void setup() {
   
     // enable all required pins, in correct order:
   sx1509.begin(SX1509_ADDRESS);
-  delay(500);
+  delay(100);
   sx1509.pinMode(fiveV_EN,OUTPUT);
+  delay(100);
   sx1509.digitalWrite(fiveV_EN,HIGH);
-  delay(500);
-  //pinMode(fiveV_ISENSE,OUTPUT);
-  //delay(500);
+  delay(200);
   sx1509.pinMode(PWR_EN,OUTPUT);
+  delay(100);
   sx1509.digitalWrite(PWR_EN,HIGH);
-  delay(500);
-  //sx1509.pinMode(eightV_EN,OUTPUT);
-  //sx1509.digitalWrite(eightV_EN,HIGH);
-  //delay(500);
+  delay(200);
+  sx1509.pinMode(eightV_EN,OUTPUT);
+  delay(100);
+  sx1509.digitalWrite(eightV_EN,HIGH);
+  delay(200);
+  sx1509.pinMode(BOOST_EN,OUTPUT);
+  delay(100);
+  sx1509.digitalWrite(BOOST_EN,HIGH);
+  delay(200);
     // enable iridium bus, and RS232 bus.
   sx1509.pinMode(IR_BUS,OUTPUT);
+  delay(100);
   sx1509.digitalWrite(IR_BUS,HIGH);
-  delay(500);
+  delay(200);
   pinMode(RS232_BUS,OUTPUT);
+  delay(100);
   digitalWrite(RS232_BUS,HIGH);
+  delay(200);
 
-  delay(500);
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
-  delay(500);
 }
 
 void loop() {
