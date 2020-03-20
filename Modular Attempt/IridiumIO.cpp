@@ -6,8 +6,6 @@ IridiumIO::IridiumIO()
 {
 	LED_COUNT = 4;
 	LED_PIN = 12; // SAMD21 pin
-	Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
-	initLED();
 	communicationLoop();
 }
 
@@ -20,6 +18,7 @@ void IridiumIO::communicationLoop()
   }
 }
 
+/*
 void IridiumIO::initLED()
 {
 	strip.begin();
@@ -31,4 +30,4 @@ void IridiumIO::initLED()
   	}	
 
 	strip.show(); // push all pixels to off state
-}
+}*/

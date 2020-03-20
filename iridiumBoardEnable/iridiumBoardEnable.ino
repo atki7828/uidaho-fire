@@ -1,7 +1,4 @@
 #include <Adafruit_NeoPixel.h>
-
-
-
 #include <SparkFunSX1509.h>
 
 /* code to power on iridium 9523 unit,
@@ -20,65 +17,83 @@
  *
  */
  
-const byte SX1509_ADDRESS = 0x3E;
+ //enable in this order:
+#define fiveV_EN 0
+#define PWR_EN 13
+#define eightV_EN 1  // enable before three959_EN
+#define three959_EN 3 
+#define IR_BUS 9
+#define RS232_BUS 7  // SAMD21, not SX1509
+#define EN_TES_BUS 11 // i think we'll need this to send data from the TES adapter to the microcontroller.
+#define PIXELS 12  //SAMD21 pin
+#define SX1509_ADDRESS 0x3E
+#define three959_GOOD 2
 SX1509 sx1509;
-// pin 1 corresponds to 8V_EN; enable after PWR_EN, and before 3959_EN (boost; pin 2).
+// pin 1 corresponds to 8V_EN; enable after PWR_EN, and before 3959_EN (boost; pin 3).
 // pins 0 and 13 on the sx1509 are connect to Iridium's 5V_EN and PWR_EN.
 // 5V_EN must be enabled before PWR_EN.
 // enable by sending high signal through sx1509.digitalWrite().
 
-const int fiveV_EN = 0; 
-const int fiveV_ISENSE = 1; // SAMD21, analog pin
-const int eightV_EN = 1;  // enable before BOOST_EN
-const int BOOST_EN = 3; 
-const int RS232_BUS = 7;  // SAMD21, not SX1509
-const int IR_BUS = 9; 
-const int PWR_EN = 13;
-const int EN_TES_BUS  = 11;
-const int PIXELS = 12;  //SAMD21 pin
+
 
 Adafruit_NeoPixel strip(4, PIXELS, NEO_RGB + NEO_KHZ800);
 
 void setup() {
-  InitLED();
+  SerialUSB.begin(9600);   // native USB port (arduino ide monitor)
+  Serial1.begin(9600);    // Iridium bus
+  //Serial.begin(9600);     // TES adapter
   delay(500);
+  InitLED();
+  
   /* if communicating with Iridium through RS-232 port, 
    *  comment out Serial1.begin(9600);
    **/
-  //Serial1.begin(9600);    // Iridium bus
-  //Serial.begin(9600);     // TES adapter
   
-    // enable all required pins, in correct order:
+  // enable all required pins, in correct order:
   sx1509.begin(SX1509_ADDRESS);
   delay(100);
   sx1509.pinMode(fiveV_EN,OUTPUT);
   delay(100);
   sx1509.digitalWrite(fiveV_EN,HIGH);
   delay(200);
+  SerialUSB.println("5V enabled");
   sx1509.pinMode(PWR_EN,OUTPUT);
   delay(100);
   sx1509.digitalWrite(PWR_EN,HIGH);
   delay(200);
+  SerialUSB.println("power enabled");
   sx1509.pinMode(eightV_EN,OUTPUT);
   delay(100);
   sx1509.digitalWrite(eightV_EN,HIGH);
   delay(200);
-  sx1509.pinMode(BOOST_EN,OUTPUT);
+  SerialUSB.println("8V enabled");
+  sx1509.pinMode(three959_EN,OUTPUT);
   delay(100);
-  sx1509.digitalWrite(BOOST_EN,HIGH);
+  sx1509.digitalWrite(three959_EN,HIGH);
   delay(200);
+  SerialUSB.println("boost enabled");
     // enable iridium bus, and RS232 bus.
+      sx1509.pinMode(EN_TES_BUS,OUTPUT);
+  delay(100);
+  sx1509.digitalWrite(EN_TES_BUS,HIGH);
+  delay(200);
+  SerialUSB.println("TES bus enabled");
   sx1509.pinMode(IR_BUS,OUTPUT);
   delay(100);
   sx1509.digitalWrite(IR_BUS,HIGH);
   delay(200);
+  SerialUSB.println("Iridium bus enabled");
   pinMode(RS232_BUS,OUTPUT);
   delay(100);
   digitalWrite(RS232_BUS,HIGH);
   delay(200);
+  SerialUSB.println("RS232 bus enabled");
 
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
+  SerialUSB.println("done.");
+    
+
 }
 
 void loop() {
@@ -91,10 +106,9 @@ void loop() {
 
 // comment out everything to write through the RS232 port.
 // 
-
   //Serial1.write("AT\r\n");
 
-   /*
+   /**/
   // if iridium is responding, print to serial monitor:
   if(Serial1.available() > 0) {
     blink();
@@ -113,11 +127,24 @@ void loop() {
     }
     Serial1.write("\r\n");
   }
-  delay(2000);
+
+  /* instead of reading from Arduino IDE Serial Monitor,
+  //  we can read from TES bus adapter.
+    // TES adapter can be plugged into USB, so we can write to it
+    // from a laptop's USB connection,
+    // or rx/tx pins -> raspberry pi.
+  if(Serial.available() > 0) {
+    while(Serial.available() > 0) {
+      Serial1.write(Serial.read());
+    }
+    Serial1.write("\r\n");
+  }
+  delay(200);
 
   /**/
 
 }
+
 
 void blink() {
   digitalWrite(13,LOW);

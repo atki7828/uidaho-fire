@@ -2,8 +2,7 @@
 #define IRIDIUMIO_H
 
 #include <Arduino.h>
-#include <Adafruit_NeoPixel.h>
-#include <SparkFunSX1509.h>
+#include "InitializeBoard.h"
 
 class IridiumIO
 {
@@ -15,7 +14,6 @@ class IridiumIO
 	private:
 		int LED_COUNT;
 		int LED_PIN;	 
-		Adafruit_NeoPixel strip;
 		
 		void communicationLoop();
 		void initLED();
