@@ -15,7 +15,7 @@ void IridiumIO::communicationLoop()
 	while(1)
 	{
 		break; // remove later!!!!
-  }
+  	}
 }
 
 /*
