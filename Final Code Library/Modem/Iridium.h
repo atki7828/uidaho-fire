@@ -37,10 +37,13 @@ class Iridium
 		string readBuffer(); // COMPLETE FOR SBD 
 		int checkConnection(); // COMPLETE FOR SBD 
 		void droppedConnectionProtocol(); // COMPLETE FOR SBD - DO LAST
+		
+		// NOW WE ARE USING RUDICS SO RETHINK DIAL UP METHODS!!
 		void initializeDialUp(); // COMPLETE FOR DIAL UP
 		void createInternetStack(); // COMPLETE FOR DIAL UP
 		void writeDialUpWrapper(); // COMPLETE FOR DIAL UP
 		void sendDialUpWrapper(); // COMPLETE FOR DIAL UP
+
 		void changeCommunicationMode(); // COMPLETE TO SWITCH BETWEEN COMM MODES
     private:
         static SX1509 sx1509;

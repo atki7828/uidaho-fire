@@ -58,7 +58,7 @@ string Iridium::readBuffer();
 
 	while(Serial1.available() > 0) 
 	{
-		SerialUSB.println("reading");
+		SerialUSB.println("Reading");
 		response += Serial1.read();
 		SerialUSB.println(response);
 	}
