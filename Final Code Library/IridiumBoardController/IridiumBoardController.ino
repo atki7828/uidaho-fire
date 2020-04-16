@@ -36,7 +36,7 @@ void setup()
 //
 void loop()
 {
-	//iridium9523.loop(); // Perform iridium9523 loop functions
+	//iridium9523.loop(); // Perform iridium9523 loop functions.
   if(SerialUSB.available() > 0) {
     String input = MonitorInput();
     SerialUSB.print("you said: ");
