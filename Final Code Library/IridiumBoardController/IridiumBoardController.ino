@@ -44,7 +44,7 @@ void loop()
     iridium9523.write(input + "\r\n");
   }
   if(Serial.available() > 0) {
-    String input = TESInput();
+    String input = iridium9523.TESInput();
     SerialUSB.print("TES said: ");
     SerialUSB.println(input);
     iridium9523.write(input + "\r\n");
@@ -68,19 +68,6 @@ String MonitorInput() {
   }
 }
 
-//for some reason requires delay(10).
-//otherwise this only returns individual characters, not full string.
-String TESInput() {
-  if(Serial.available() > 0) {
-    SerialUSB.println("reading tes");
-    String r = "";
-    while(Serial.available() > 0) {
-      r += (char)Serial.read();
-      delay(10);
-    }
-    return r;
-  }  
-}
 // Blinks pin 13 on our board for current testing - REMOVE IN FINAL RELEASE
 void blink()
 {

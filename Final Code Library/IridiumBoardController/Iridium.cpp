@@ -42,7 +42,9 @@ int Iridium::available()
 // Send output message to SBD buffer
 void Iridium::writeSBD(String outgoingMessage)
 {
-
+  this->write("AT+SBDWT=");
+  this->write(outgoingMessage);
+  this->write("\r\n");
 }
 
 // Transmit data by initializing an SBD session
@@ -165,4 +167,24 @@ void Iridium::setupBoard()
 void variableInit()
 {
 	
+}
+
+
+//for some reason requires delay(10).
+//otherwise this only returns individual characters, not full string.
+// TODO:
+// when receiving from TES port, either:
+// immediately transmit whatever came in as SBD, or:
+// parse input, process whatever command it includes:  transmit, switch mode, check signal?
+// or something else.
+String Iridium::TESInput() {
+  if(Serial.available() > 0) {
+    SerialUSB.println("reading tes");
+    String r = "";
+    while(Serial.available() > 0) {
+      r += (char)Serial.read();
+      delay(10);
+    }
+    return r;
+  }  
 }

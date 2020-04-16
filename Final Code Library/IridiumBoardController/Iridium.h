@@ -31,6 +31,7 @@ class Iridium
         Iridium(); // COMPLETE FOR SBD 
         void init(); // COMPLETE FOR SBD 
         void write(String str);
+        String TESInput();
 		void loop(); // COMPLETE FOR SBD
 		int available(); // COMPLETE FOR SBD
         void writeSBD(String); // COMPLETE FOR SBD 
