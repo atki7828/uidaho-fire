@@ -14,8 +14,8 @@ using namespace std;
 
 // Global Variables
 SX1509 Iridium::sx1509;
-string Iridium::CSQ = "AT+CSQ\r\n";
-communicationStatus Iridium::commStatus = Idle;
+String Iridium::CSQ = "AT+CSQ\r\n";
+Iridium::communicationStatus Iridium::commStatus = Idle;
 
 // Public Functions:
 
@@ -29,7 +29,7 @@ Iridium::Iridium()
 void Iridium::init() 
 { 
 	setupBoard(); // enable the correct pins in the correct order
-	variableInit(); // REMOVE AND JUST ADD INITS AS GLOBALS
+	//variableInit(); // REMOVE AND JUST ADD INITS AS GLOBALS
 	// CONSIDER ADDING OTHER INITS LIKE TCP/IP STACK?
 }
 
@@ -51,19 +51,22 @@ void Iridium::sendSBD()
 
 }
 
-// Read from the serial buffer and return the string
-string Iridium::readBuffer();
+// Read from iridium serial buffer and return the string
+String Iridium::readBuffer()
 {
-	string response = "";
-
-	while(Serial1.available() > 0) 
-	{
-		SerialUSB.println("Reading");
-		response += Serial1.read();
-		SerialUSB.println(response);
-	}
-
-	return response;
+  if(Serial1.available() > 0) {
+  	String response = "";
+    //SerialUSB.println("Reading");
+  	while(Serial1.available() > 0) 
+  	{
+  		response += (char)Serial1.read();
+  		//SerialUSB.println(response);
+      delay(100);
+  	}
+  
+  	return response;
+  }
+  
 }
 
 // Return the connection of the Iridium modem to the network
@@ -104,6 +107,13 @@ void Iridium::sendDialUpWrapper()
 
 
 // MICHAEL's
+// writes directly to Iridium modem.
+// to use in context of AT commands,
+// do something like....
+// String cmd = "AT+SBDWT=";
+// iridium9523.write(cmd);
+// iridium9523.write("sending this message!");
+// iridium9523.write("\r\n");
 void Iridium::write(String str) 
 {
   	Serial1.print(str);
@@ -112,36 +122,40 @@ void Iridium::write(String str)
 // Private Functions:
 
 // Enables the correct pins in the correct order
-void setupBoard()
+void Iridium::setupBoard()
 {
 	Serial.begin(9600);
 	Serial1.begin(9600);
 	SerialUSB.begin(9600);
 	sx1509.begin(SX1509_ADDRESS);
-	SerialUSB.println("Constructor constructed!");
 	//CSQ = "AT+CSQ\r\n"; declared up top
 	sx1509.pinMode(fiveV_EN,OUTPUT);
 	sx1509.digitalWrite(fiveV_EN,HIGH);
+  delay(100);
 	SerialUSB.println("5V initialized");
 	sx1509.pinMode(PWR_EN,OUTPUT);
 	sx1509.digitalWrite(PWR_EN,HIGH);
 	SerialUSB.println("pwr initialized");
+  delay(100);
 	sx1509.pinMode(eightV_EN,OUTPUT);
 	sx1509.digitalWrite(eightV_EN,HIGH);
 	SerialUSB.println("8V initialized");
+  delay(100);
 	//sx1509.pinMode(three959_EN,OUTPUT);
 	//sx1509.digitalWrite(three959_EN,HIGH);
 	//SerialUSB.println("boost initialized");
 	sx1509.pinMode(EN_TES_BUS,OUTPUT);
 	sx1509.digitalWrite(EN_TES_BUS,HIGH);
 	SerialUSB.println("TES bus initialized");
+  delay(100);
 	sx1509.pinMode(IR_BUS,OUTPUT);
 	sx1509.digitalWrite(IR_BUS,HIGH);
 	SerialUSB.println("Iridium bus initialized");
+  delay(100);
 	pinMode(RS232_BUS,OUTPUT);
 	digitalWrite(RS232_BUS,HIGH);
 	SerialUSB.println("RS232 bus initialized");
-	
+	delay(100);
 	pinMode(13,OUTPUT);
 	digitalWrite(13,HIGH);
 	SerialUSB.println("Done!");
