@@ -7,6 +7,9 @@
 #ifndef IRIDIUM_H
 #define IRIDIUM_H
 
+#define IridiumSer Serial1
+#define TESSer Serial
+
 // Libaries
 #include <Arduino.h>
 #include <SparkFunSX1509.h>
@@ -34,11 +37,13 @@ class Iridium
         String TESInput();
 		void loop(); // COMPLETE FOR SBD
 		int available(); // COMPLETE FOR SBD
-        void writeSBD(String); // COMPLETE FOR SBD 
+    void WriteSBD(String); // COMPLETE FOR SBD 
 		void sendSBD(); // COMPLETE FOR SBD 
+    void InitiateSession();
 		String readBuffer(); // COMPLETE FOR SBD 
 		int checkConnection(); // COMPLETE FOR SBD 
 		void droppedConnectionProtocol(); // COMPLETE FOR SBD - DO LAST
+    void ProcessResponse(String); // parses response from AT command
 		
 		// NOW WE MAY BE USING RUDICS SO RETHINK DIAL UP METHODS!!
 		void initializeDialUp(); // COMPLETE FOR DIAL UP
@@ -51,8 +56,9 @@ class Iridium
     private:
         static SX1509 sx1509;
         static String CSQ;
-	 	enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
-		static communicationStatus commStatus;
+	 	//enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
+    enum communicationState { IDLE, WRITING, READING, CONNECTING }; // will need to add more as we go
+		communicationState commState;
 };
 
 #endif // IRIDIUM_H

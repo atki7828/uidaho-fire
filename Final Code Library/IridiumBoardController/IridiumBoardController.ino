@@ -12,9 +12,18 @@
 
 // IridiumBoardController.ino:
 //     -The main controller of our overall software package.
-//     -Initiates all relavant systems and then updates each of them through the 
+//     -Initiates all relevant systems and then updates each of them through the 
 //		update method.
 
+/*
+ * In order to handle commands for data transmission and reception,
+ * we're implementing a simple command set, such that the microcontroller will receive a certain command and take action based on that.
+ * these are the commands we're using so far:
+ *  command:      action:
+ *  tx:[data]       transmit SBD
+ *  rx              check for incoming SBD
+ *  
+ */
 // Libraries
 #include "Iridium.h"
 #include <SparkFunSX1509.h>
@@ -38,27 +47,32 @@ void loop()
 {
 	//iridium9523.loop(); // Perform iridium9523 loop functions.
   if(SerialUSB.available() > 0) {
-    String input = MonitorInput();
+    String input = IDEInput();
     SerialUSB.print("you said: ");
     SerialUSB.println(input);
     iridium9523.write(input + "\r\n");
   }
-  if(Serial.available() > 0) {
-    String input = iridium9523.TESInput();
+  if(TESSer.available() > 0) {
+    String input = TESInput();
     SerialUSB.print("TES said: ");
     SerialUSB.println(input);
-    iridium9523.write(input + "\r\n");
+    SerialUSB.println(input.indexOf("tx:"));
+    if(input.indexOf("tx:") > -1) {
+      SerialUSB.println(input.substring(3,input.length()));
+      iridium9523.WriteSBD(input.substring(3,input.length()));
+    }
   }
-  if(Serial1.available() > 0) {
+  if(IridiumSer.available() > 0) {
     String response = iridium9523.readBuffer();
     SerialUSB.print("iridium said: ");
     SerialUSB.println(response);
+    iridium9523.ProcessResponse(response);
   }
 
 }
 
 // read from arduino IDE serial monitor
-String MonitorInput() {
+String IDEInput() {
   if(SerialUSB.available() > 0) {
     String r = "";
     while(SerialUSB.available() > 0) {
@@ -66,6 +80,26 @@ String MonitorInput() {
     }
     return r;
   }
+}
+
+
+//for some reason requires delay(10). (that's 10ms)
+//otherwise this only returns individual characters, not full string.
+// TODO:
+// when receiving from TES port, either:
+// immediately transmit whatever came in as SBD, or:
+// parse input, process whatever command it includes:  transmit, switch mode, check signal?
+// or something else.
+String TESInput() {
+  if(Serial.available() > 0) {
+    SerialUSB.println("reading tes");
+    String r = "";
+    while(Serial.available() > 0) {
+      r += (char)Serial.read();
+      delay(10);
+    }
+    return r;
+  }  
 }
 
 // Blinks pin 13 on our board for current testing - REMOVE IN FINAL RELEASE

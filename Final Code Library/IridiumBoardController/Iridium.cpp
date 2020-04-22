@@ -12,10 +12,10 @@ using namespace std;
 // Serial1 : Iridium bus
 // Serial : TES bus
 
+
 // Global Variables
 SX1509 Iridium::sx1509;
 String Iridium::CSQ = "AT+CSQ\r\n";
-Iridium::communicationStatus Iridium::commStatus = Idle;
 
 // Public Functions:
 
@@ -36,15 +36,24 @@ void Iridium::init()
 // Returns the number of bytes available on Serial1
 int Iridium::available() 
 {
-  	return Serial1.available();
+  	return IridiumSer.available();
 }
 
 // Send output message to SBD buffer
-void Iridium::writeSBD(String outgoingMessage)
+void Iridium::WriteSBD(String outgoingMessage)
 {
+  SerialUSB.print("writing sbd:");
+  SerialUSB.println(outgoingMessage);
   this->write("AT+SBDWT=");
   this->write(outgoingMessage);
   this->write("\r\n");
+  this->commState = WRITING;
+}
+
+// initiates a session with the satellite network
+void Iridium::InitiateSession() {
+  SerialUSB.println("initiating session");
+  this->write("AT+SBDI\r\n");
 }
 
 // Transmit data by initializing an SBD session
@@ -56,12 +65,12 @@ void Iridium::sendSBD()
 // Read from iridium serial buffer and return the string
 String Iridium::readBuffer()
 {
-  if(Serial1.available() > 0) {
+  if(IridiumSer.available() > 0) {
   	String response = "";
     //SerialUSB.println("Reading");
-  	while(Serial1.available() > 0) 
+  	while(IridiumSer.available() > 0) 
   	{
-  		response += (char)Serial1.read();
+  		response += (char)IridiumSer.read();
   		//SerialUSB.println(response);
       delay(100);
   	}
@@ -118,7 +127,7 @@ void Iridium::sendDialUpWrapper()
 // iridium9523.write("\r\n");
 void Iridium::write(String str) 
 {
-  	Serial1.print(str);
+  	IridiumSer.print(str);
 }
 
 // Private Functions:
@@ -126,8 +135,8 @@ void Iridium::write(String str)
 // Enables the correct pins in the correct order
 void Iridium::setupBoard()
 {
-	Serial.begin(9600);
-	Serial1.begin(9600);
+	TESSer.begin(9600);
+	IridiumSer.begin(9600);
 	SerialUSB.begin(9600);
 	sx1509.begin(SX1509_ADDRESS);
 	//CSQ = "AT+CSQ\r\n"; declared up top
@@ -143,9 +152,9 @@ void Iridium::setupBoard()
 	sx1509.digitalWrite(eightV_EN,HIGH);
 	SerialUSB.println("8V initialized");
   delay(100);
-	//sx1509.pinMode(three959_EN,OUTPUT);
-	//sx1509.digitalWrite(three959_EN,HIGH);
-	//SerialUSB.println("boost initialized");
+	sx1509.pinMode(three959_EN,OUTPUT);
+	sx1509.digitalWrite(three959_EN,HIGH);
+	SerialUSB.println("boost initialized");
 	sx1509.pinMode(EN_TES_BUS,OUTPUT);
 	sx1509.digitalWrite(EN_TES_BUS,HIGH);
 	SerialUSB.println("TES bus initialized");
@@ -161,30 +170,48 @@ void Iridium::setupBoard()
 	pinMode(13,OUTPUT);
 	digitalWrite(13,HIGH);
 	SerialUSB.println("Done!");
+  this->commState = IDLE;
+}
+
+void Iridium::ProcessResponse(String response) {
+  if(response.indexOf("OK") > 0) {
+    switch(this->commState) {
+      case WRITING:
+        this->InitiateSession();
+        this->commState = CONNECTING;
+        break;
+      default:
+        this->commState = IDLE;
+        break;
+    }
+    return;
+  }
+  else if(response.indexOf("SBDI:") > 0) {
+    /*
+     * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
+        where:
+        <MO status>:
+          MO session status provides an indication of the disposition of the mobile originated transaction.
+          The field can take on the following values:
+          0: No SBD message to send from the ISU.
+          1: SBD message successfully sent from the ISU to the ESS.
+          2: An error occurred while attempting to send SBD message from ISU to ESS.
+        
+        <MT status>:
+          The MT status provides an indication of the disposition of the mobile terminated transaction. The
+          field can take on the following values:
+          0: No SBD message to receive from the ESS.
+          1: SBD message successfully received from the ESS.
+          2: An error occurred while attempting to perform a mailbox check or receive a message
+          from the ESS.
+     */
+    // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
+    // check MT status ( == 1 ? message received; now call SBDRT.)
+  }
 }
 
 // Initialize all private variables
 void variableInit()
 {
 	
-}
-
-
-//for some reason requires delay(10).
-//otherwise this only returns individual characters, not full string.
-// TODO:
-// when receiving from TES port, either:
-// immediately transmit whatever came in as SBD, or:
-// parse input, process whatever command it includes:  transmit, switch mode, check signal?
-// or something else.
-String Iridium::TESInput() {
-  if(Serial.available() > 0) {
-    SerialUSB.println("reading tes");
-    String r = "";
-    while(Serial.available() > 0) {
-      r += (char)Serial.read();
-      delay(10);
-    }
-    return r;
-  }  
 }
