@@ -173,6 +173,7 @@ void Iridium::setupBoard()
   this->commState = IDLE;
 }
 
+// take an action based on iridium's response to our commands.
 void Iridium::ProcessResponse(String response) {
   if(response.indexOf("OK") > 0) {
     switch(this->commState) {
@@ -184,6 +185,12 @@ void Iridium::ProcessResponse(String response) {
         this->commState = IDLE;
         break;
     }
+    return;
+  }
+  else if(response.indexOf("SBDRT:") > 0) {
+    // response was:  "+SBDRT:\r\n(incoming message)\r\n".
+    // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
+    this->commState = IDLE;
     return;
   }
   else if(response.indexOf("SBDI:") > 0) {

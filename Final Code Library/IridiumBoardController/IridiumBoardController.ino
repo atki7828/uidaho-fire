@@ -52,14 +52,19 @@ void loop()
     SerialUSB.println(input);
     iridium9523.write(input + "\r\n");
   }
+  //TODO: here we should store TESInput() in a buffer string, then wait to do anything with it
+  // until iridium9523.CommState == IDLE.
+  // problem is, TES may be sending input multiple times.
+  // so maybe store TESInput() in a String array, and once iridium9523.CommState == IDLE,
+  // iterate through array and handle each one, removing from array as they're processed.
   if(TESSer.available() > 0) {
     String input = TESInput();
     SerialUSB.print("TES said: ");
     SerialUSB.println(input);
-    SerialUSB.println(input.indexOf("tx:"));
     if(input.indexOf("tx:") > -1) {
-      SerialUSB.println(input.substring(3,input.length()));
       iridium9523.WriteSBD(input.substring(3,input.length()));
+    }
+    else if(input.indexOf("rx") > -1) {
     }
   }
   if(IridiumSer.available() > 0) {

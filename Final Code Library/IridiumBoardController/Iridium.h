@@ -40,6 +40,7 @@ class Iridium
     void WriteSBD(String); // COMPLETE FOR SBD 
 		void sendSBD(); // COMPLETE FOR SBD 
     void InitiateSession();
+    void readSBD();
 		String readBuffer(); // COMPLETE FOR SBD 
 		int checkConnection(); // COMPLETE FOR SBD 
 		void droppedConnectionProtocol(); // COMPLETE FOR SBD - DO LAST
