@@ -190,6 +190,14 @@ void Iridium::ProcessResponse(String response) {
   else if(response.indexOf("SBDRT:") > 0) {
     // response was:  "+SBDRT:\r\n(incoming message)\r\n".
     // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
+    string inMessage = "";
+    int pos = response.indexOf('\n');
+    pos++;
+    while (response[pos]!= '\r'){
+      inMessage += response[pos++];
+    }
+    SerialUSB.println(inMessage);
+
     this->commState = IDLE;
     return;
   }
