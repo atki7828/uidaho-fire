@@ -223,6 +223,12 @@ void Iridium::ProcessResponse(String response) {
     // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
     // check MT status ( == 1 ? message received; now call SBDRT.)
   }
+  else if(response == "CONNECT 19200") {
+
+  }
+  else if(response == "NO CARRIER") {
+
+  }
 }
 
 // Initialize all private variables
