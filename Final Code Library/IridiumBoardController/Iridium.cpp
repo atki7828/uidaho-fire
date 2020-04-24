@@ -95,7 +95,12 @@ void Iridium::droppedConnectionProtocol()
 // Initializes a dial-up connection
 void Iridium::initializeDialUp()
 {
-
+  SerialUSB.print("dialing gateway: ");
+  SerialUSB.println(GatewayNumber);
+  this->write("ATDP");
+  this->write(GatewayNumber);
+  this->write("\r\n");
+  this->commState = DIALING;
 }
 
 // Instantiates a separate class for the TCP/IP stack
@@ -152,7 +157,7 @@ void Iridium::setupBoard()
 	sx1509.digitalWrite(eightV_EN,HIGH);
 	SerialUSB.println("8V initialized");
   delay(100);
-	sx1509.pinMode(three959_EN,OUTPUT);
+	sx1509.pinMode(three959_EN,OUTPUT);   // we'll probably want to stick this in a new function to call as needed.  only needed when dialing?
 	sx1509.digitalWrite(three959_EN,HIGH);
 	SerialUSB.println("boost initialized");
 	sx1509.pinMode(EN_TES_BUS,OUTPUT);
@@ -171,6 +176,7 @@ void Iridium::setupBoard()
 	digitalWrite(13,HIGH);
 	SerialUSB.println("Done!");
   this->commState = IDLE;
+  this->write("AT+CR=1\r\n"); // enables reporting; necessary for starting dialup call.
 }
 
 // take an action based on iridium's response to our commands.
@@ -187,13 +193,13 @@ void Iridium::ProcessResponse(String response) {
     }
     return;
   }
-  else if(response.indexOf("SBDRT:") > 0) {
+  else if(response.indexOf("SBDRT:") > -1) {
     // response was:  "+SBDRT:\r\n(incoming message)\r\n".
     // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
     this->commState = IDLE;
     return;
   }
-  else if(response.indexOf("SBDI:") > 0) {
+  else if(response.indexOf("SBDI:") > -1) {
     /*
      * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
         where:
@@ -214,6 +220,15 @@ void Iridium::ProcessResponse(String response) {
      */
     // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
     // check MT status ( == 1 ? message received; now call SBDRT.)
+  }
+
+  else if(response.indexOf("CONNECT") > -1) {
+    SerialUSB.println("connected");
+    this->commState = CONNECTED;
+  }
+  else if(response.indexOf("NO CARRIER") > -1) {
+    SerialUSB.println("call dropped");
+    this->commState = IDLE;
   }
 }
 

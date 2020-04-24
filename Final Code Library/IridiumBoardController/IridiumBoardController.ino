@@ -22,6 +22,7 @@
  *  command:      action:
  *  tx:[data]       transmit SBD
  *  rx              check for incoming SBD
+ *  dial            establish dialup connection
  *  
  */
 // Libraries
@@ -42,7 +43,7 @@ void setup()
 	iridium9523.init(); // Initialize the carrier board and communication
 }
 
-//
+
 void loop()
 {
 	//iridium9523.loop(); // Perform iridium9523 loop functions.
@@ -65,6 +66,10 @@ void loop()
       iridium9523.WriteSBD(input.substring(3,input.length()));
     }
     else if(input.indexOf("rx") > -1) {
+    }
+    else if(input.indexOf("dial") > -1) {
+      // dialup.
+      iridium9523.initializeDialUp();
     }
   }
   if(IridiumSer.available() > 0) {
@@ -96,11 +101,11 @@ String IDEInput() {
 // parse input, process whatever command it includes:  transmit, switch mode, check signal?
 // or something else.
 String TESInput() {
-  if(Serial.available() > 0) {
+  if(TESSer.available() > 0) {
     SerialUSB.println("reading tes");
     String r = "";
-    while(Serial.available() > 0) {
-      r += (char)Serial.read();
+    while(TESSer.available() > 0) {
+      r += (char)TESSer.read();
       delay(10);
     }
     return r;
