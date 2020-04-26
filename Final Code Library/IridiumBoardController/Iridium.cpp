@@ -204,7 +204,7 @@ void Iridium::ProcessResponse(String response) {
       switch(this->commState) {
         case WRITING:
           this->InitiateSession();
-          this->commState = CONNECTING;
+          this->commState = INITIATING;
           break;
         default:
           this->commState = IDLE;
