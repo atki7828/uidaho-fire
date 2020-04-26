@@ -196,7 +196,7 @@ void Iridium::ProcessResponse(String response) {
   MessagePos = 0;
 
   while(messageHolder[MessagePos] != ""){
-    if(messageHolder[MessagePos].indexOf("OK") > 0) {
+    if(messageHolder[MessagePos].indexOf("OK") > -1) {
     switch(this->commState) {
       case WRITING:
         this->InitiateSession();
