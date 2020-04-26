@@ -175,7 +175,28 @@ void Iridium::setupBoard()
 
 // take an action based on iridium's response to our commands.
 void Iridium::ProcessResponse(String response) {
-  if(response.indexOf("OK") > 0) {
+  String messageHolder[20];
+
+  for (int i = 0; i < 20; i++){
+    messageHolder[i] = "";
+  }
+
+  int MessagePos = 0;
+  int responseSize = response.size();
+
+  for (int i = 0; i < responseSize; i++){
+    String message = "";
+    while(response[i] != '\r'){
+      message += response[i++];
+    }
+    i++;
+    messageHolder[MessagePos++] = message;
+  }
+
+  MessagePos = 0;
+
+  while(messageHolder[MessagePos] != ""){
+    if(messageHolder[MessagePos].indexOf("OK") > 0) {
     switch(this->commState) {
       case WRITING:
         this->InitiateSession();
@@ -185,23 +206,16 @@ void Iridium::ProcessResponse(String response) {
         this->commState = IDLE;
         break;
     }
-    return;
   }
-  else if(response.indexOf("SBDRT:") > 0) {
+  else if(messageHolder[MessagePos].indexOf("SBDRT:") > 0) {
     // response was:  "+SBDRT:\r\n(incoming message)\r\n".
     // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
-    string inMessage = "";
-    int pos = response.indexOf('\n');
-    pos++;
-    while (response[pos]!= '\r'){
-      inMessage += response[pos++];
-    }
-    SerialUSB.println(inMessage);
+    SerialUSB.println(messageHolder[MessagePos+1]);
+    MessagePos++;
 
     this->commState = IDLE;
-    return;
   }
-  else if(response.indexOf("SBDI:") > 0) {
+  else if(messageHolder[MessagePos].indexOf("SBDI:") > 0) {
     /*
      * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
         where:
@@ -223,12 +237,18 @@ void Iridium::ProcessResponse(String response) {
     // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
     // check MT status ( == 1 ? message received; now call SBDRT.)
   }
-  else if(response == "CONNECT 19200") {
-
+  else if(messageHolder[MessagePos] == "CONNECT 19200") {
+    this->commState = CONNECTED;
+    SerialUSB.println("Dial-up connection established successfully");
   }
-  else if(response == "NO CARRIER") {
-
+  else if(messageHolder[MessagePos] == "NO CARRIER") {
+    this->commState = IDLE;
+    SerialUSB.println("Dial-up connection dropped");
+    }
+    MessagePos++;
   }
+
+  return;
 }
 
 // Initialize all private variables

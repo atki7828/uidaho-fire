@@ -58,7 +58,7 @@ class Iridium
         static SX1509 sx1509;
         static String CSQ;
 	 	//enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
-    enum communicationState { IDLE, WRITING, READING, CONNECTING }; // will need to add more as we go
+    enum communicationState { IDLE, WRITING, READING, CONNECTING, CONNECTED }; // will need to add more as we go
 		communicationState commState;
 };
 
