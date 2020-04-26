@@ -20,21 +20,21 @@ String Iridium::CSQ = "AT+CSQ\r\n";
 // Public Functions:
 
 // Initialization will happen when iridiumInstantiation.init() is called
-Iridium::Iridium() 
+Iridium::Iridium()
 {
 	// MAYBE RE-WORK FUNCTIONS DOWN THE ROAD TO UTILIZE THIS?
 }
 
 // Initializes the carrier board for communication
-void Iridium::init() 
-{ 
+void Iridium::init()
+{
 	setupBoard(); // enable the correct pins in the correct order
 	//variableInit(); // REMOVE AND JUST ADD INITS AS GLOBALS
 	// CONSIDER ADDING OTHER INITS LIKE TCP/IP STACK?
 }
 
 // Returns the number of bytes available on Serial1
-int Iridium::available() 
+int Iridium::available()
 {
   	return IridiumSer.available();
 }
@@ -68,16 +68,16 @@ String Iridium::readBuffer()
   if(IridiumSer.available() > 0) {
   	String response = "";
     //SerialUSB.println("Reading");
-  	while(IridiumSer.available() > 0) 
+  	while(IridiumSer.available() > 0)
   	{
   		response += (char)IridiumSer.read();
   		//SerialUSB.println(response);
       delay(100);
   	}
-  
+
   	return response;
   }
-  
+
 }
 
 // Return the connection of the Iridium modem to the network
@@ -102,7 +102,6 @@ void Iridium::initializeDialUp()
   this->write("\r\n");
   this->commState = DIALING;
 }
-
 // Instantiates a separate class for the TCP/IP stack
 void Iridium::createInternetStack()
 {
@@ -130,7 +129,7 @@ void Iridium::sendDialUpWrapper()
 // iridium9523.write(cmd);
 // iridium9523.write("sending this message!");
 // iridium9523.write("\r\n");
-void Iridium::write(String str) 
+void Iridium::write(String str)
 {
   	IridiumSer.print(str);
 }
@@ -157,7 +156,7 @@ void Iridium::setupBoard()
 	sx1509.digitalWrite(eightV_EN,HIGH);
 	SerialUSB.println("8V initialized");
   delay(100);
-	sx1509.pinMode(three959_EN,OUTPUT);   // we'll probably want to stick this in a new function to call as needed.  only needed when dialing?
+	sx1509.pinMode(three959_EN,OUTPUT);
 	sx1509.digitalWrite(three959_EN,HIGH);
 	SerialUSB.println("boost initialized");
 	sx1509.pinMode(EN_TES_BUS,OUTPUT);
@@ -176,64 +175,92 @@ void Iridium::setupBoard()
 	digitalWrite(13,HIGH);
 	SerialUSB.println("Done!");
   this->commState = IDLE;
-  this->write("AT+CR=1\r\n"); // enables reporting; necessary for starting dialup call.
 }
 
 // take an action based on iridium's response to our commands.
 void Iridium::ProcessResponse(String response) {
-  if(response.indexOf("OK") > 0) {
-    switch(this->commState) {
-      case WRITING:
-        this->InitiateSession();
-        this->commState = CONNECTING;
-        break;
-      default:
-        this->commState = IDLE;
-        break;
-    }
-    return;
-  }
-  else if(response.indexOf("SBDRT:") > -1) {
-    // response was:  "+SBDRT:\r\n(incoming message)\r\n".
-    // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
-    this->commState = IDLE;
-    return;
-  }
-  else if(response.indexOf("SBDI:") > -1) {
-    /*
-     * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
-        where:
-        <MO status>:
-          MO session status provides an indication of the disposition of the mobile originated transaction.
-          The field can take on the following values:
-          0: No SBD message to send from the ISU.
-          1: SBD message successfully sent from the ISU to the ESS.
-          2: An error occurred while attempting to send SBD message from ISU to ESS.
-        
-        <MT status>:
-          The MT status provides an indication of the disposition of the mobile terminated transaction. The
-          field can take on the following values:
-          0: No SBD message to receive from the ESS.
-          1: SBD message successfully received from the ESS.
-          2: An error occurred while attempting to perform a mailbox check or receive a message
-          from the ESS.
-     */
-    // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
-    // check MT status ( == 1 ? message received; now call SBDRT.)
+
+  String messageHolder[20];
+
+  for (int i = 0; i < 20; i++){
+    messageHolder[i] = "";
   }
 
-  else if(response.indexOf("CONNECT") > -1) {
-    SerialUSB.println("connected");
-    this->commState = CONNECTED;
+  int MessagePos = 0;
+  int responseSize = response.length();
+  int numMessages = 0;
+  for (int i = 0; i < responseSize; i++){
+    String message = "";
+    while(response[i] != '\r'){
+      message += response[i++];
+    }
+    i++;
+    messageHolder[numMessages++] = message;
   }
-  else if(response.indexOf("NO CARRIER") > -1) {
-    SerialUSB.println("call dropped");
+
+  for(int i = 0; i < numMessages; i++) {
+    if(messageHolder[i].indexOf("OK") > -1) {
+      SerialUSB.println("Got OK");
+      switch(this->commState) {
+        case WRITING:
+          this->InitiateSession();
+          this->commState = CONNECTING;
+          break;
+        default:
+          this->commState = IDLE;
+          break;
+      }
+    }
+    else if(messageHolder[i].indexOf("SBDRT:") > -1) {
+      SerialUSB.println("Got SBDRT");
+      // response was:  "+SBDRT:\r\n(incoming message)\r\n".
+      // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
+      SerialUSB.println("MT message: " + messageHolder[i+1]);
+      // According to Ames, anything incoming should go directly to TES...something like:  TESSer.write(messageHolder[i+1]);
+      i++;
+
+      this->commState = IDLE;
+    }
+    else if(messageHolder[i].indexOf("SBDI:") > -1) {
+      SerialUSB.println("Got SBDI");
+      /*
+       * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
+          where:
+          <MO status>:
+            MO session status provides an indication of the disposition of the mobile originated transaction.
+            The field can take on the following values:
+            0: No SBD message to send from the ISU.
+            1: SBD message successfully sent from the ISU to the ESS.
+            2: An error occurred while attempting to send SBD message from ISU to ESS.
+          
+          <MT status>:
+            The MT status provides an indication of the disposition of the mobile terminated transaction. The
+            field can take on the following values:
+            0: No SBD message to receive from the ESS.
+            1: SBD message successfully received from the ESS.
+            2: An error occurred while attempting to perform a mailbox check or receive a message
+            from the ESS.
+       */
+      // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
+      // check MT status ( == 1 ? message received; now call SBDRT.)
+    }
+    else if(messageHolder[i].indexOf("CONNECT") > -1) {
+      SerialUSB.println("Got CONNECT");
+      this->commState = CONNECTED;
+      SerialUSB.println("Dial-up connection established successfully");
+    }
+  else if(messageHolder[i].indexOf("NO CARRIER") > -1) {
+    SerialUSB.println("Got No Carrier");
     this->commState = IDLE;
+    SerialUSB.println("Dial-up connection dropped");
+    }
   }
+
+  return;
 }
 
 // Initialize all private variables
 void variableInit()
 {
-	
+
 }
