@@ -175,6 +175,7 @@ void Iridium::setupBoard()
 
 // take an action based on iridium's response to our commands.
 void Iridium::ProcessResponse(String response) {
+  
   String messageHolder[20];
 
   for (int i = 0; i < 20; i++){
@@ -182,70 +183,73 @@ void Iridium::ProcessResponse(String response) {
   }
 
   int MessagePos = 0;
-  int responseSize = response.size();
-
+  int responseSize = response.length();
+  int numMessages = 0;
   for (int i = 0; i < responseSize; i++){
     String message = "";
     while(response[i] != '\r'){
       message += response[i++];
     }
     i++;
-    messageHolder[MessagePos++] = message;
+    messageHolder[numMessages++] = message;
   }
 
-  MessagePos = 0;
-
-  while(messageHolder[MessagePos] != ""){
-    if(messageHolder[MessagePos].indexOf("OK") > -1) {
-    switch(this->commState) {
-      case WRITING:
-        this->InitiateSession();
-        this->commState = CONNECTING;
-        break;
-      default:
-        this->commState = IDLE;
-        break;
+  for(int i = 0; i < numMessages; i++) {
+    if(messageHolder[i].indexOf("OK") > -1) {
+      SerialUSB.println("Got OK");
+      switch(this->commState) {
+        case WRITING:
+          this->InitiateSession();
+          this->commState = CONNECTING;
+          break;
+        default:
+          this->commState = IDLE;
+          break;
+      }
     }
-  }
-  else if(messageHolder[MessagePos].indexOf("SBDRT:") > 0) {
-    // response was:  "+SBDRT:\r\n(incoming message)\r\n".
-    // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
-    SerialUSB.println(messageHolder[MessagePos+1]);
-    MessagePos++;
-
-    this->commState = IDLE;
-  }
-  else if(messageHolder[MessagePos].indexOf("SBDI:") > 0) {
-    /*
-     * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
-        where:
-        <MO status>:
-          MO session status provides an indication of the disposition of the mobile originated transaction.
-          The field can take on the following values:
-          0: No SBD message to send from the ISU.
-          1: SBD message successfully sent from the ISU to the ESS.
-          2: An error occurred while attempting to send SBD message from ISU to ESS.
-        
-        <MT status>:
-          The MT status provides an indication of the disposition of the mobile terminated transaction. The
-          field can take on the following values:
-          0: No SBD message to receive from the ESS.
-          1: SBD message successfully received from the ESS.
-          2: An error occurred while attempting to perform a mailbox check or receive a message
-          from the ESS.
-     */
-    // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
-    // check MT status ( == 1 ? message received; now call SBDRT.)
-  }
-  else if(messageHolder[MessagePos] == "CONNECT 19200") {
-    this->commState = CONNECTED;
-    SerialUSB.println("Dial-up connection established successfully");
-  }
-  else if(messageHolder[MessagePos] == "NO CARRIER") {
+    else if(messageHolder[i].indexOf("SBDRT:") > -1) {
+      SerialUSB.println("Got SBDRT");
+      // response was:  "+SBDRT:\r\n(incoming message)\r\n".
+      // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
+      SerialUSB.println("MT message: " + messageHolder[i+1]);
+      // According to Ames, anything incoming should go directly to TES...something like:  TESSer.write(messageHolder[i+1]);
+      i++;
+  
+      this->commState = IDLE;
+    }
+    else if(messageHolder[i].indexOf("SBDI:") > -1) {
+      SerialUSB.println("Got SBDI");
+      /*
+       * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
+          where:
+          <MO status>:
+            MO session status provides an indication of the disposition of the mobile originated transaction.
+            The field can take on the following values:
+            0: No SBD message to send from the ISU.
+            1: SBD message successfully sent from the ISU to the ESS.
+            2: An error occurred while attempting to send SBD message from ISU to ESS.
+          
+          <MT status>:
+            The MT status provides an indication of the disposition of the mobile terminated transaction. The
+            field can take on the following values:
+            0: No SBD message to receive from the ESS.
+            1: SBD message successfully received from the ESS.
+            2: An error occurred while attempting to perform a mailbox check or receive a message
+            from the ESS.
+       */
+      // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
+      // check MT status ( == 1 ? message received; now call SBDRT.)
+    }
+    else if(messageHolder[i].indexOf("CONNECT") > -1) {
+      SerialUSB.println("Got CONNECT");
+      this->commState = CONNECTED;
+      SerialUSB.println("Dial-up connection established successfully");
+    }
+  else if(messageHolder[i].indexOf("NO CARRIER") > -1) {
+    SerialUSB.println("Got No Carrier");
     this->commState = IDLE;
     SerialUSB.println("Dial-up connection dropped");
     }
-    MessagePos++;
   }
 
   return;
