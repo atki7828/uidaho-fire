@@ -231,6 +231,20 @@ void Iridium::ProcessResponse(String response) {
       }
       pos++;
       MT = messageHolder[i][pos];
+
+      if(MO == '1'){
+        SerialUSB.println("SBD message sucessfully sent");
+      }else{
+        SerialUSB.println("Error while sending SBD message");
+        // Try again?
+      }
+
+      if(MT == '1'){
+        SerialUSB.println("SBD message succesfully received");
+        this->write("AT+SBDRT\r\n");
+      }else{
+        // What do we want to do if it errors?
+      }
       
       /*
        * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
