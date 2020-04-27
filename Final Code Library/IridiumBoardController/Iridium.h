@@ -7,8 +7,16 @@
 #ifndef IRIDIUM_H
 #define IRIDIUM_H
 
-#define IridiumSer Serial1
-#define TESSer Serial
+// Serial ports
+#define IridiumSer    Serial1
+#define TESSer        Serial
+
+// iridium commands
+#define TX_COMM       "tx:"
+#define RX_COMM       "rx"
+#define DIAL_COMM     "dial"
+#define CSQ_COMM      "csq"
+#define GatewayNumber "008816000025"
 
 // Libaries
 #include <Arduino.h>
@@ -23,10 +31,9 @@
 #define IR_BUS 9
 #define RS232_BUS 7  // SAMD21, not SX1509
 #define EN_TES_BUS 11 // We need this to send data from the TES adapter to the microcontroller
-#define PIXELS 12  // SAMD21 pin
+#define PIXELS 12  // SAMD21 pin; for LEDS on test board
 #define SX1509_ADDRESS 0x3E
 #define three959_GOOD 2
-#define GatewayNumber "008816000025"
 
 
 class Iridium

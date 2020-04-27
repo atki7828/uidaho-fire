@@ -23,7 +23,7 @@
  *  tx:[data]       transmit SBD
  *  rx              check for incoming SBD
  *  dial            establish dialup connection
- *  
+ *  csq             check signal quality
  */
 // Libraries
 #include "Iridium.h"
@@ -31,6 +31,7 @@
 
 // Global Variables
 Iridium iridium9523; // Instance of our Iridium class
+String TESInputBuffer;
 
 // Main Functions
 
@@ -46,32 +47,31 @@ void setup()
 
 void loop()
 {
-	//iridium9523.loop(); // Perform iridium9523 loop functions.
   if(SerialUSB.available() > 0) {
     String input = IDEInput();
     SerialUSB.print("you said: ");
     SerialUSB.println(input);
     iridium9523.write(input + "\r\n");
   }
-  //TODO: here we should store TESInput() in a buffer string, then wait to do anything with it
-  // until iridium9523.CommState == IDLE.
-  // problem is, TES may be sending input multiple times.
-  // so maybe store TESInput() in a String array, and once iridium9523.CommState == IDLE,
-  // iterate through array and handle each one, removing from array as they're processed.
+
+  // append input from TES to TESInputBuffer, with \r\n as delimiter
   if(TESSer.available() > 0) {
-    String input = TESInput();
+    TESInputBuffer += GetTESInput() + "\r\n";
     SerialUSB.print("TES said: ");
-    SerialUSB.println(input);
-    if(input.indexOf("tx:") > -1) {
-      iridium9523.WriteSBD(input.substring(3,input.length()));
-    }
-    else if(input.indexOf("rx") > -1) {
-    }
-    else if(input.indexOf("dial") > -1) {
-      // dialup.
-      iridium9523.initializeDialUp();
-    }
+    SerialUSB.println(TESInputBuffer);
   }
+
+  // if there's ready input from TES,
+  // and if the iridium's not busy,
+  // do the thing.
+  if(TESInputBuffer.length() > 0 && iridium9523.commState == IDLE) {
+    //
+    String input = TESInputBuffer.substring(0,TESInputBuffer.indexOf("\r\n")+1);
+     HandleTESInput(input);
+    // pop the processed message out of the buffer:
+    TESInputBuffer = TESInputBuffer.substring(TESInputBuffer.indexOf("\r\n")+2,TESInputBuffer.length());
+  }
+  
   if(IridiumSer.available() > 0) {
     String response = iridium9523.readBuffer();
     SerialUSB.print("iridium said: ");
@@ -79,6 +79,17 @@ void loop()
     iridium9523.ProcessResponse(response);
   }
 
+}
+
+void HandleTESInput(String input) {
+  if(input.indexOf(TX_COMM) > -1) {
+    iridium9523.WriteSBD(input);
+  }
+  else if(input.indexOf(RX_COMM) > -1) {
+  }
+  else if(input.indexOf(DIAL_COMM) > -1) {
+    iridium9523.initializeDialUp();
+  }
 }
 
 // read from arduino IDE serial monitor
@@ -93,14 +104,14 @@ String IDEInput() {
 }
 
 
-//for some reason requires delay(10). (that's 10ms)
+//for some reason requires delay(10). (10ms)
 //otherwise this only returns individual characters, not full string.
 // TODO:
 // when receiving from TES port, either:
 // immediately transmit whatever came in as SBD, or:
 // parse input, process whatever command it includes:  transmit, switch mode, check signal?
 // or something else.
-String TESInput() {
+String GetTESInput() {
   if(TESSer.available() > 0) {
     SerialUSB.println("reading tes");
     String r = "";
