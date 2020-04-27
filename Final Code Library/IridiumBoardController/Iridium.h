@@ -35,6 +35,7 @@
 #define SX1509_ADDRESS 0x3E
 #define three959_GOOD 2
 
+enum communicationState { IDLE, WRITING, READING, INITIATING, DIALING, CONNECTED }; // will need to add more as we go
 
 class Iridium
 {
@@ -43,6 +44,7 @@ class Iridium
         void init(); // COMPLETE FOR SBD
         void write(String str);
         String TESInput();
+        bool ready();
 		void loop(); // COMPLETE FOR SBD
 		int available(); // COMPLETE FOR SBD
     void WriteSBD(String); // COMPLETE FOR SBD
@@ -60,14 +62,14 @@ class Iridium
 		void writeDialUpWrapper(); // COMPLETE FOR DIAL UP
 		void sendDialUpWrapper(); // COMPLETE FOR DIAL UP
 
-		void changeCommunicationMode(); // COMPLETE TO SWITCH BETWEEN COMM MODES
     void setupBoard();
     private:
         static SX1509 sx1509;
         static String CSQ;
 	 	//enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
-    enum communicationState { IDLE, WRITING, READING, INITIATING, DIALING, CONNECTED }; // will need to add more as we go
 		communicationState commState;
+   void SwitchState(communicationState);
+   static String statename(communicationState state);
 };
 
 #endif // IRIDIUM_H

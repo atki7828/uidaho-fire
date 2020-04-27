@@ -64,7 +64,7 @@ void loop()
   // if there's ready input from TES,
   // and if the iridium's not busy,
   // do the thing.
-  if(TESInputBuffer.length() > 0 && iridium9523.commState == IDLE) {
+  if(TESInputBuffer.length() > 0 && iridium9523.ready()) {
     //
     String input = TESInputBuffer.substring(0,TESInputBuffer.indexOf("\r\n")+1);
      HandleTESInput(input);
@@ -83,7 +83,7 @@ void loop()
 
 void HandleTESInput(String input) {
   if(input.indexOf(TX_COMM) > -1) {
-    iridium9523.WriteSBD(input);
+    iridium9523.WriteSBD(input.substring(3,input.length()));
   }
   else if(input.indexOf(RX_COMM) > -1) {
   }

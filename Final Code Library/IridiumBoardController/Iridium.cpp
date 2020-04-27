@@ -33,6 +33,8 @@ void Iridium::init()
 	// CONSIDER ADDING OTHER INITS LIKE TCP/IP STACK?
 }
 
+bool Iridium::ready() { return this->commState == IDLE; }
+
 // Returns the number of bytes available on Serial1
 int Iridium::available()
 {
@@ -47,7 +49,7 @@ void Iridium::WriteSBD(String outgoingMessage)
   this->write("AT+SBDWT=");
   this->write(outgoingMessage);
   this->write("\r\n");
-  this->commState = WRITING;
+  this->SwitchState(WRITING);
 }
 
 // initiates a session with the satellite network
@@ -100,7 +102,7 @@ void Iridium::initializeDialUp()
   this->write("ATDP");
   this->write(GatewayNumber);
   this->write("\r\n");
-  this->commState = DIALING;
+  this->SwitchState(DIALING);
 }
 // Instantiates a separate class for the TCP/IP stack
 void Iridium::createInternetStack()
@@ -174,7 +176,7 @@ void Iridium::setupBoard()
 	pinMode(13,OUTPUT);
 	digitalWrite(13,HIGH);
 	SerialUSB.println("Done!");
-  this->commState = IDLE;
+  this->SwitchState(IDLE);
 }
 
 // take an action based on iridium's response to our commands.
@@ -204,7 +206,7 @@ void Iridium::ProcessResponse(String response) {
       switch(this->commState) {
         case WRITING:
           this->InitiateSession();
-          this->commState = INITIATING;
+          this->SwitchState(INITIATING);
           break;
         default:
           this->commState = IDLE;
@@ -218,8 +220,7 @@ void Iridium::ProcessResponse(String response) {
       SerialUSB.println("MT message: " + messageHolder[i+1]);
       // According to Ames, anything incoming should go directly to TES...something like:  TESSer.write(messageHolder[i+1]);
       i++;
-
-      this->commState = IDLE;
+      this->SwitchState(IDLE);
     }
     else if(messageHolder[i].indexOf("SBDI:") > -1) {
       SerialUSB.println("Got SBDI");
@@ -243,20 +244,46 @@ void Iridium::ProcessResponse(String response) {
        */
       // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
       // check MT status ( == 1 ? message received; now call SBDRT.)
+      this->SwitchState(IDLE);
     }
     else if(messageHolder[i].indexOf("CONNECT") > -1) {
       SerialUSB.println("Got CONNECT");
-      this->commState = CONNECTED;
+      this->SwitchState(CONNECTED);
       SerialUSB.println("Dial-up connection established successfully");
     }
   else if(messageHolder[i].indexOf("NO CARRIER") > -1) {
     SerialUSB.println("Got No Carrier");
-    this->commState = IDLE;
     SerialUSB.println("Dial-up connection dropped");
-    }
+    this->SwitchState(IDLE);
+  }
   }
 
   return;
+}
+
+  void Iridium::SwitchState(communicationState state) {
+    SerialUSB.println("state switched from " + statename(this->commState) + " to " + statename(state));
+    this->commState = state;
+  }
+
+// just for debugging
+String Iridium::statename(communicationState state) {
+  switch(state) {
+    case IDLE:
+      return "IDLE";
+    case WRITING:
+      return "WRITING";
+    case READING:
+      return "READING";
+    case INITIATING:
+      return "INITIATING";
+    case DIALING:
+      return "DIALING";
+    case CONNECTED:
+      return "CONNECTED";
+    default:
+      return "";
+  }
 }
 
 // Initialize all private variables
