@@ -236,10 +236,12 @@ void Iridium::ProcessResponse(String response) {
         SerialUSB.println("Error with SBD message");
         SerialUSB.println("Issuing SBDI command");
         this->write("AT+SBDI\r\n");
+      }else if (MT == '1'){
+        SerialUSB.println("Issuing SBDRT command");
+        this->write("AT+SBDRT\r\n");
       }else{
         SerialUSB.println("SBDI successful");
         this->commState = IDLE;
-        // Do we want to return even though there could be more messages in the messageHolder to go through? 
       }
       
       /*
