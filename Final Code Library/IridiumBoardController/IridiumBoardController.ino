@@ -16,91 +16,95 @@
 //		update method.
 
 /*
- * In order to handle commands for data transmission and reception,
- * we're implementing a simple command set, such that the microcontroller will receive a certain command and take action based on that.
- * these are the commands we're using so far:
- *  command:      action:
- *  tx:[data]       transmit SBD
- *  rx              check for incoming SBD
- *  dial            establish dialup connection
- *  csq             check signal quality
- */
-// Libraries
+* In order to handle commands for data transmission and reception,
+* we're implementing a simple command set, such that the microcontroller will receive a certain command and take action based on that.
+* these are the commands we're using so far:
+*  command:      action:
+*  tx:[data]       transmit SBD
+*  rx              check for incoming SBD
+*  dial            establish dialup connection
+*  csq             check signal quality
+*/
+
+// Libraries:
 #include "Iridium.h"
+#include "Crypto.h"
 #include <SparkFunSX1509.h>
 
-// Global Variables
-Iridium iridium9523; // Instance of our Iridium class
+// Global Variables:
+bool isEncryptionEnabled = true; // Set to true to enforce the encryption and decryption of messages
+Crypto crypto; // Instance of our crypto system
+Iridium iridium9523(isEncryptionEnabled, crypto); // Instance of our Iridium class
 String TESInputBuffer;
 
-// Main Functions
+
+// Main Functions:
 
 // Initialize the carrier board with the appropriate pins
 void setup()
 {
-  SerialUSB.begin(9600);
-  SerialUSB.println("initializing....");
-	delay(2000); // Delay by 1 second to give IDE's serial monitor time to load
-	iridium9523.init(); // Initialize the carrier board and communication
-}
+    SerialUSB.begin(9600);
+    SerialUSB.println("initializing....");
+    delay(2000); // Delay by 1 second to give IDE's serial monitor time to load
+    iridium9523.init(); // Initialize the carrier board and communication
+    }
 
 
 void loop()
 {
-  if(SerialUSB.available() > 0) {
+if(SerialUSB.available() > 0) {
     String input = IDEInput();
     SerialUSB.print("you said: ");
     SerialUSB.println(input);
     iridium9523.write(input + "\r\n");
-  }
+}
 
-  // append input from TES to TESInputBuffer, with \r\n as delimiter
-  if(TESSer.available() > 0) {
+// append input from TES to TESInputBuffer, with \r\n as delimiter
+if(TESSer.available() > 0) {
     TESInputBuffer += GetTESInput() + "\r\n";
     SerialUSB.print("TES said: ");
     SerialUSB.println(TESInputBuffer);
-  }
+}
 
-  // if there's ready input from TES,
-  // and if the iridium's not busy,
-  // do the thing.
-  if(TESInputBuffer.length() > 0 && iridium9523.ready()) {
-    //
+// if there's ready input from TES,
+// and if the iridium's not busy,
+// do the thing.
+if(TESInputBuffer.length() > 0 && iridium9523.ready()) {
     String input = TESInputBuffer.substring(0,TESInputBuffer.indexOf("\r\n")+1);
-     HandleTESInput(input);
+    HandleTESInput(input);
     // pop the processed message out of the buffer:
     TESInputBuffer = TESInputBuffer.substring(TESInputBuffer.indexOf("\r\n")+2,TESInputBuffer.length());
-  }
-  
-  if(IridiumSer.available() > 0) {
+}
+
+if(IridiumSer.available() > 0) {
     String response = iridium9523.readBuffer();
     SerialUSB.print("iridium said: ");
     SerialUSB.println(response);
     iridium9523.ProcessResponse(response);
-  }
+}
 
 }
 
 void HandleTESInput(String input) {
-  if(input.indexOf(TX_COMM) > -1) {
-    iridium9523.WriteSBD(input.substring(3,input.length()));
-  }
-  else if(input.indexOf(RX_COMM) > -1) {
-  }
-  else if(input.indexOf(DIAL_COMM) > -1) {
-    iridium9523.initializeDialUp();
-  }
+    if(input.indexOf(TX_COMM) > -1) {
+        iridium9523.WriteSBD(input.substring(3,input.length()));
+    }
+    else if(input.indexOf(RX_COMM) > -1) {
+    }
+    else if(input.indexOf(DIAL_COMM) > -1) {
+        iridium9523.initializeDialUp();
+    }
 }
 
 // read from arduino IDE serial monitor
 String IDEInput() {
-  if(SerialUSB.available() > 0) {
-    String r = "";
-    while(SerialUSB.available() > 0) {
-      r += (char)SerialUSB.read();
+    if(SerialUSB.available() > 0) {
+        String r = "";
+        while(SerialUSB.available() > 0) {
+        r += (char)SerialUSB.read();
+        }
+        return r;
     }
-    return r;
-  }
 }
 
 
@@ -112,21 +116,21 @@ String IDEInput() {
 // parse input, process whatever command it includes:  transmit, switch mode, check signal?
 // or something else.
 String GetTESInput() {
-  if(TESSer.available() > 0) {
-    SerialUSB.println("reading tes");
-    String r = "";
-    while(TESSer.available() > 0) {
-      r += (char)TESSer.read();
-      delay(10);
-    }
-    return r;
-  }  
+    if(TESSer.available() > 0) {
+        SerialUSB.println("reading tes");
+        String r = "";
+        while(TESSer.available() > 0) {
+        r += (char)TESSer.read();
+        delay(10);
+        }
+        return r;
+    }  
 }
 
 // Blinks pin 13 on our board for current testing - REMOVE IN FINAL RELEASE
 void blink()
 {
-	digitalWrite(13,LOW);
-  	delay(200);
-  	digitalWrite(13,HIGH);
+    digitalWrite(13,LOW);
+    delay(200);
+    digitalWrite(13,HIGH);
 }
