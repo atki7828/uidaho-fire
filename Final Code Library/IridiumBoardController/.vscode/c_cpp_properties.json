@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Users\\Brandon Foss\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**",
+                "C:\\Users\\Brandon Foss\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.6\\**",
+                "D:\\Users\\Brandon Foss\\Documents\\Arduino\\libraries\\SX1509_IO_Expander\\src",
+                "C:\\Program Files (x86)\\Arduino\\tools\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\**"
+            ],
+            "forcedInclude": [
+                "C:\\Users\\Brandon Foss\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.6\\cores\\arduino\\Arduino.h"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.25.28610/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "defines": [
+                "USBCON"
+            ]
+        }
+    ],
+    "version": 4
+}

@@ -1,0 +1,6 @@
+{
+    "programmer": "AVR ISP",
+    "board": "arduino:samd:arduino_zero_native",
+    "port": "COM3",
+    "sketch": "IridiumBoardController.ino"
+}

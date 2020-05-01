@@ -31,10 +31,12 @@
 #include "Crypto.h"
 #include <SparkFunSX1509.h>
 
+#define SerialUSB Serial
+
 // Global Variables:
 bool isEncryptionEnabled = true; // Set to true to enforce the encryption and decryption of messages
 Crypto crypto; // Instance of our crypto system
-Iridium iridium9523(isEncryptionEnabled, crypto); // Instance of our Iridium class
+Iridium iridium9523; // Instance of our Iridium class
 String TESInputBuffer;
 
 
@@ -44,9 +46,9 @@ String TESInputBuffer;
 void setup()
 {
     SerialUSB.begin(9600);
-    SerialUSB.println("initializing....");
+    SerialUSB.println(("initializing...."));
     delay(2000); // Delay by 1 second to give IDE's serial monitor time to load
-    iridium9523.init(); // Initialize the carrier board and communication
+    iridium9523.init(isEncryptionEnabled, crypto); // Initialize the carrier board and communication
     }
 
 
@@ -54,7 +56,7 @@ void loop()
 {
 if(SerialUSB.available() > 0) {
     String input = IDEInput();
-    SerialUSB.print("you said: ");
+    SerialUSB.print(("you said: "));
     SerialUSB.println(input);
     iridium9523.write(input + "\r\n");
 }
@@ -62,7 +64,7 @@ if(SerialUSB.available() > 0) {
 // append input from TES to TESInputBuffer, with \r\n as delimiter
 if(TESSer.available() > 0) {
     TESInputBuffer += GetTESInput() + "\r\n";
-    SerialUSB.print("TES said: ");
+    SerialUSB.print(("TES said: "));
     SerialUSB.println(TESInputBuffer);
 }
 
@@ -78,7 +80,7 @@ if(TESInputBuffer.length() > 0 && iridium9523.ready()) {
 
 if(IridiumSer.available() > 0) {
     String response = iridium9523.readBuffer();
-    SerialUSB.print("iridium said: ");
+    SerialUSB.print(("iridium said: "));
     SerialUSB.println(response);
     iridium9523.ProcessResponse(response);
 }
@@ -117,7 +119,7 @@ String IDEInput() {
 // or something else.
 String GetTESInput() {
     if(TESSer.available() > 0) {
-        SerialUSB.println("reading tes");
+        SerialUSB.println(("reading tes"));
         String r = "";
         while(TESSer.available() > 0) {
         r += (char)TESSer.read();

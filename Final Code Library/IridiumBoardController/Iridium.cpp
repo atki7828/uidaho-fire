@@ -4,7 +4,6 @@
 
 // Libraries
 #include "Iridium.h"
-#include <cstring>
 
 // Namespaces
 using namespace std;
@@ -13,7 +12,6 @@ using namespace std;
 // Serial1 : Iridium bus
 // Serial : TES bus
 
-
 // Global Variables
 SX1509 Iridium::sx1509;
 String Iridium::CSQ = "AT+CSQ\r\n";
@@ -21,27 +19,28 @@ String Iridium::CSQ = "AT+CSQ\r\n";
 // Public Functions:
 
 // Initialization will happen when iridiumInstantiation.init() is called
-Iridium::Iridium(bool enableEncryption, Crypto crypt)
+Iridium::Iridium()
 {
+    // Never Called
+}
+
+// Initializes the carrier board for communication
+void Iridium::init(bool enableEncryption, Crypto crypt)
+{
+    setupBoard(); // enable the correct pins in the correct order
+    //variableInit(); // REMOVE AND JUST ADD INITS AS GLOBALS
+    
     isEncryptionEnabled = enableEncryption;
     if(isEncryptionEnabled)
     {
         crypto = crypt;
-        SerialUSB.print("Enabling Encryption");
+        SerialUSB.print(("Enabling Encryption..."));
     }
 
     else
     {
-        SerialUSB.print("No Encryption");
+        SerialUSB.print(("No Encryption..."));
     }
-}
-
-// Initializes the carrier board for communication
-void Iridium::init()
-{
-    setupBoard(); // enable the correct pins in the correct order
-    //variableInit(); // REMOVE AND JUST ADD INITS AS GLOBALS
-    // CONSIDER ADDING OTHER INITS LIKE TCP/IP STACK?
 }
 
 bool Iridium::ready() { return this->commState == IDLE; }
@@ -55,31 +54,21 @@ int Iridium::available()
 // Send output message to SBD buffer
 void Iridium::WriteSBD(String outgoingMessage)
 {
-    SerialUSB.print("writing sbd:");
+    SerialUSB.print(("writing sbd:"));
 
     if(isEncryptionEnabled)
     {
-        // Convert the string to a c char array
-        char* tmpMessage = new char [outgoingMessage.length() + 1];
-        strcpy(tmpMessage, outgoingMessage.c_str());
-        // Calculate encrypted message
-        uint8_t* encryptedMessage = (uint8_t*)malloc((strlen((char*)tmpMessage)) * sizeof(uint8_t) + 1);
-        encryptedMessage = crypto.encrypt_cbc((uint8_t*)tmpMessage);
-        //SerialUSB.println(outgoingMessage);
+        uint8_t* encryptedMessage = crypto.encrypt_cbc(outgoingMessage);
+        delay(5);
         SerialUSB.println((char*)encryptedMessage);
         this->write("AT+SBDWT=");
-        //this->write(outgoingMessage);
         this->write((char*)encryptedMessage);
         this->write("\r\n");
         this->SwitchState(WRITING);
-
-        // Free variables
-        free(tmpMessage);
     }
 
     else
     {
-        SerialUSB.print("writing sbd:");
         SerialUSB.println(outgoingMessage);
         this->write("AT+SBDWT=");
         this->write(outgoingMessage);
@@ -91,7 +80,7 @@ void Iridium::WriteSBD(String outgoingMessage)
 
 // initiates a session with the satellite network
 void Iridium::InitiateSession() {
-    SerialUSB.println("initiating session");
+    SerialUSB.println(("initiating session"));
     this->write("AT+SBDI\r\n");
 }
 
@@ -134,7 +123,7 @@ void Iridium::droppedConnectionProtocol()
 // Initializes a dial-up connection
 void Iridium::initializeDialUp()
 {
-    SerialUSB.print("dialing gateway: ");
+    SerialUSB.print(("dialing gateway: "));
     SerialUSB.println(GatewayNumber);
     this->write("ATDP");
     this->write(GatewayNumber);
@@ -240,7 +229,7 @@ for (int i = 0; i < responseSize; i++){
 
 for(int i = 0; i < numMessages; i++) {
     if(messageHolder[i].indexOf("OK") > -1) {
-        SerialUSB.println("Got OK");
+        SerialUSB.println(("Got OK"));
         switch(this->commState) {
             case WRITING:
             this->InitiateSession();
@@ -252,7 +241,7 @@ for(int i = 0; i < numMessages; i++) {
     }
     }
     else if(messageHolder[i].indexOf("SBDRT:") > -1) {
-        SerialUSB.println("Got SBDRT");
+        SerialUSB.println(("Got SBDRT"));
         // response was:  "+SBDRT:\r\n(incoming message)\r\n".
         // we need to store "(incoming message)" in it's own variable, and...do something with it.  maybe just print to SerialUSB for now.
         SerialUSB.println("MT message: " + messageHolder[i+1]);
@@ -261,7 +250,7 @@ for(int i = 0; i < numMessages; i++) {
         this->SwitchState(IDLE);
     }
     else if(messageHolder[i].indexOf("SBDI:") > -1) {
-        SerialUSB.println("Got SBDI");
+        SerialUSB.println(("Got SBDI"));
         /*
         * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
             where:
@@ -285,13 +274,13 @@ for(int i = 0; i < numMessages; i++) {
         this->SwitchState(IDLE);
     }
     else if(messageHolder[i].indexOf("CONNECT") > -1) {
-        SerialUSB.println("Got CONNECT");
+        SerialUSB.println(("Got CONNECT"));
         this->SwitchState(CONNECTED);
         SerialUSB.println("Dial-up connection established successfully");
     }
     else if(messageHolder[i].indexOf("NO CARRIER") > -1) {
-        SerialUSB.println("Got No Carrier");
-        SerialUSB.println("Dial-up connection dropped");
+        SerialUSB.println(("Got No Carrier"));
+        SerialUSB.println(("Dial-up connection dropped"));
         this->SwitchState(IDLE);
     }
 }

@@ -8,7 +8,7 @@
 #define IRIDIUM_H
 
 // Serial ports
-#define IridiumSer    Serial1
+#define IridiumSer    Serial
 #define TESSer        Serial
 
 // iridium commands
@@ -21,7 +21,6 @@
 // Libaries
 #include <Arduino.h>
 #include <SparkFunSX1509.h>
-#include <string.h>
 #include "Crypto.h"
 
 // Pins we have to enable - Listed in order to enable
@@ -41,8 +40,8 @@ enum communicationState { IDLE, WRITING, READING, INITIATING, DIALING, CONNECTED
 class Iridium
 {
     public:
-        Iridium(bool enableEncryption, Crypto crypt); // COMPLETE FOR SBD
-        void init(); // COMPLETE FOR SBD
+        Iridium(); // COMPLETE FOR SBD
+        void init(bool enableEncryption, Crypto crypt); // COMPLETE FOR SBD
         void write(String str);
         String TESInput();
         bool ready();
@@ -67,8 +66,8 @@ class Iridium
     private:
         static SX1509 sx1509;
         static String CSQ;
-	 	//enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
-		communicationState commState;
+    	 	//enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
+    		communicationState commState;
         void SwitchState(communicationState);
         static String statename(communicationState state);
         bool isEncryptionEnabled;
