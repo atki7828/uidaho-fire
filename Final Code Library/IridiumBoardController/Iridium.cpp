@@ -96,24 +96,6 @@ void Iridium::initializeDialUp()
   this->write("\r\n");
   this->SwitchState(DIALING);
 }
-// Instantiates a separate class for the TCP/IP stack
-void Iridium::createInternetStack()
-{
-
-}
-
-// Wrapper method to write a message to a dial up queue
-void Iridium::writeDialUpWrapper()
-{
-
-}
-
-// Wrapper method to send any queued up data via the dial up connection
-void Iridium::sendDialUpWrapper()
-{
-
-}
-
 
 // MICHAEL's
 // writes directly to Iridium modem.
@@ -236,27 +218,6 @@ void Iridium::ProcessResponse(String response) {
         SerialUSB.println("SBDI successful");
         this->commState = IDLE;
       }
-      
-      /*
-       * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
-          where:
-          <MO status>:
-            MO session status provides an indication of the disposition of the mobile originated transaction.
-            The field can take on the following values:
-            0: No SBD message to send from the ISU.
-            1: SBD message successfully sent from the ISU to the ESS.
-            2: An error occurred while attempting to send SBD message from ISU to ESS.
-          
-          <MT status>:
-            The MT status provides an indication of the disposition of the mobile terminated transaction. The
-            field can take on the following values:
-            0: No SBD message to receive from the ESS.
-            1: SBD message successfully received from the ESS.
-            2: An error occurred while attempting to perform a mailbox check or receive a message
-            from the ESS.
-       */
-      // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
-      // check MT status ( == 1 ? message received; now call SBDRT.)
       this->SwitchState(IDLE);
     }
     else if(messageHolder[i].indexOf("CONNECT") > -1) {
