@@ -43,20 +43,20 @@ class Iridium
 public:
     Iridium(); 
     void setupBoard();
-    void WriteSBD(String str); 
+    void writeSBD(String str); 
     void write(String str);
-    void InitiateSession();
     String readBuffer();
     int available();
     bool ready(); 
-    void ProcessResponse(String str); 
+    void processResponse(String str); 
     void initializeDialUp(); 
 private:
     static SX1509 sx1509;
     static String CSQ;
     static int baud;
     communicationState commState;
-    void SwitchState(communicationState state);
+    void initiateSession();
+    void switchState(communicationState state);
     static String statename(communicationState state);
 };
 

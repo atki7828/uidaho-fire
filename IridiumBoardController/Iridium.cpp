@@ -20,83 +20,13 @@ SX1509 Iridium::sx1509;
 String Iridium::CSQ = "AT+CSQ\r\n";
 int Iridium::baud = 9600;
 
-// Public Functions Implementation:
+// Function Implementations
 
-// Initialization will happen when iridiumInstantiation.setupBoard() is called
+// Initialization will happen when iridiumInstantiation.setupBoard() is called instead
 Iridium::Iridium()
 {
     // Do Nothing
 }
-
-// Returns true if the Iridium is in an IDLE state - Indicates it is ready
-bool Iridium::ready() { return this->commState == IDLE; }
-
-// Returns the number of bytes available on Serial1
-int Iridium::available()
-{
-    return IridiumSer.available();
-}
-
-// Send output message to SBD buffer
-void Iridium::WriteSBD(String outgoingMessage)
-{
-    SerialUSB.print("writing sbd:");
-    SerialUSB.println(outgoingMessage);
-    this->write("AT+SBDWT=");
-    this->write(outgoingMessage);
-    this->write("\r\n");
-    this->SwitchState(WRITING);
-}
-
-// Initiates a session with the satellite network - Sends the SBD message
-void Iridium::InitiateSession() 
-{
-    SerialUSB.println("initiating session");
-    this->write("AT+SBDI\r\n");
-}
-
-// Read from iridium serial buffer and return the string
-String Iridium::readBuffer()
-{
-    if(IridiumSer.available() > 0) 
-    {
-        String response = "";
-        //SerialUSB.println("Reading");
-        while(IridiumSer.available() > 0)
-        {
-            response += (char)IridiumSer.read();
-            //SerialUSB.println(response);
-            delay(100);
-        }
-
-        return response;
-    }
-}
-
-// Initializes a dial-up connection
-void Iridium::initializeDialUp()
-{
-    SerialUSB.print("dialing gateway: ");
-    SerialUSB.println(GatewayNumber);
-    this->write("ATDP");
-    this->write(GatewayNumber);
-    this->write("\r\n");
-    this->SwitchState(DIALING);
-}
-
-// Writes directly to Iridium modem.
-// In order to use in context of AT commands,
-// do something like....
-// String cmd = "AT+SBDWT=";
-// iridium9523.write(cmd);
-// iridium9523.write("sending this message!");
-// iridium9523.write("\r\n");
-void Iridium::write(String str)
-{
-    IridiumSer.print(str);
-}
-
-// Private Functions Implemenatnion:
 
 // Enables the carrier board pins in the correct order
 void Iridium::setupBoard()
@@ -135,11 +65,68 @@ void Iridium::setupBoard()
     pinMode(13,OUTPUT);
     digitalWrite(13,HIGH);
     SerialUSB.println("Done!");
-    this->SwitchState(IDLE);
+    this->switchState(IDLE);
 }
 
+// Send output message to SBD buffer
+void Iridium::writeSBD(String outgoingMessage)
+{
+    SerialUSB.print("writing sbd:");
+    SerialUSB.println(outgoingMessage);
+    this->write("AT+SBDWT=");
+    this->write(outgoingMessage);
+    this->write("\r\n");
+    this->switchState(WRITING);
+}
+
+// Writes directly to Iridium modem
+// In order to use in context of AT commands,
+// do something like....
+// String cmd = "AT+SBDWT=";
+// iridium9523.write(cmd);
+// iridium9523.write("sending this message!");
+// iridium9523.write("\r\n");
+void Iridium::write(String str)
+{
+    IridiumSer.print(str);
+}
+
+// Initiates a session with the satellite network - Sends the SBD message
+void Iridium::initiateSession() 
+{
+    SerialUSB.println("initiating session");
+    this->write("AT+SBDI\r\n");
+}
+
+// Read from iridium serial buffer and return the string
+String Iridium::readBuffer()
+{
+    if(IridiumSer.available() > 0) 
+    {
+        String response = "";
+        //SerialUSB.println("Reading");
+        while(IridiumSer.available() > 0)
+        {
+            response += (char)IridiumSer.read();
+            //SerialUSB.println(response);
+            delay(100);
+        }
+
+        return response;
+    }
+}
+
+// Returns the number of bytes available on Serial1
+int Iridium::available()
+{
+    return IridiumSer.available();
+}
+
+// Returns true if the Iridium is in an IDLE state - Indicates it is ready
+bool Iridium::ready() { return this->commState == IDLE; }
+
 // Takes an action based on the Iridium's response to our commands
-void Iridium::ProcessResponse(String response) 
+void Iridium::processResponse(String response) 
 {
     String messageHolder[20];
     int responseSize = response.length();
@@ -171,8 +158,8 @@ void Iridium::ProcessResponse(String response)
             switch(this->commState) 
             {
                 case WRITING:
-                this->InitiateSession();
-                this->SwitchState(INITIATING);
+                this->initiateSession();
+                this->switchState(INITIATING);
                 break;
                 default:
                 this->commState = IDLE;
@@ -187,7 +174,7 @@ void Iridium::ProcessResponse(String response)
             // According to Ames, anything incoming should go directly to TES
             // This could be something like:  TESSer.write(messageHolder[i+1]);
             i++;
-            this->SwitchState(IDLE);
+            this->switchState(IDLE);
         }
         else if(messageHolder[i].indexOf("SBDI:") > -1) 
         {
@@ -214,27 +201,38 @@ void Iridium::ProcessResponse(String response)
                 SerialUSB.println("SBDI successful");
                 this->commState = IDLE;
             }
-            this->SwitchState(IDLE);
+            this->switchState(IDLE);
         }
         else if(messageHolder[i].indexOf("CONNECT") > -1) 
         {
             SerialUSB.println("Got CONNECT");
-            this->SwitchState(CONNECTED);
+            this->switchState(CONNECTED);
             SerialUSB.println("Dial-up connection established successfully");
         }
         else if(messageHolder[i].indexOf("NO CARRIER") > -1) 
         {
             SerialUSB.println("Got No Carrier");
             SerialUSB.println("Dial-up connection dropped");
-            this->SwitchState(IDLE);
+            this->switchState(IDLE);
         }
     }
 
     return;
 }
 
+// Initializes a dial-up connection
+void Iridium::initializeDialUp()
+{
+    SerialUSB.print("dialing gateway: ");
+    SerialUSB.println(GatewayNumber);
+    this->write("ATDP");
+    this->write(GatewayNumber);
+    this->write("\r\n");
+    this->switchState(DIALING);
+}
+
 // Switches the state of the modem
-void Iridium::SwitchState(communicationState state) 
+void Iridium::switchState(communicationState state) 
 {
     SerialUSB.println("state switched from " + statename(this->commState) 
         + " to " + statename(state));
