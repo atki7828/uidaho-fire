@@ -41,7 +41,7 @@ void setup()
   SerialUSB.begin(9600);
   SerialUSB.println("initializing....");
 	delay(2000); // Delay by 1 second to give IDE's serial monitor time to load
-	iridium9523.init(); // Initialize the carrier board and communication
+	iridium9523.setupBoard(); // Initialize the carrier board and communication
 }
 
 

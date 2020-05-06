@@ -40,36 +40,24 @@ enum communicationState { IDLE, WRITING, READING, INITIATING, DIALING, CONNECTED
 class Iridium
 {
     public:
-        Iridium(); // COMPLETE FOR SBD
-        void init(); // COMPLETE FOR SBD
-        void write(String str);
-        String TESInput();
-        bool ready();
-		void loop(); // COMPLETE FOR SBD
-		int available(); // COMPLETE FOR SBD
-    void WriteSBD(String); // COMPLETE FOR SBD
-		void sendSBD(); // COMPLETE FOR SBD
-    void InitiateSession();
-    void readSBD();
-		String readBuffer(); // COMPLETE FOR SBD
-		int checkConnection(); // COMPLETE FOR SBD
-		void droppedConnectionProtocol(); // COMPLETE FOR SBD - DO LAST
-    void ProcessResponse(String); // parses response from AT command
-
-		// NOW WE MAY BE USING RUDICS SO RETHINK DIAL UP METHODS!!
-		void initializeDialUp(); // COMPLETE FOR DIAL UP
-		void createInternetStack(); // COMPLETE FOR DIAL UP
-		void writeDialUpWrapper(); // COMPLETE FOR DIAL UP
-		void sendDialUpWrapper(); // COMPLETE FOR DIAL UP
-
-    void setupBoard();
+      Iridium(); 
+      void write(String str);
+      String TESInput();
+      bool ready();
+		  int available(); 
+      void WriteSBD(String); 
+      void InitiateSession();
+      void readSBD();
+		  String readBuffer();
+      void ProcessResponse(String); 
+		  void initializeDialUp(); 
+      void setupBoard();
     private:
-        static SX1509 sx1509;
-        static String CSQ;
-	 	//enum communicationStatus {Idle, SBD, Rudics}; // all possible states for the modem
-		communicationState commState;
-   void SwitchState(communicationState);
-   static String statename(communicationState state);
+      static SX1509 sx1509;
+      static String CSQ;
+		  communicationState commState;
+      void SwitchState(communicationState);
+      static String statename(communicationState state);
 };
 
 #endif // IRIDIUM_H
