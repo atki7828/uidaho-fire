@@ -25,14 +25,6 @@ Iridium::Iridium()
 	// MAYBE RE-WORK FUNCTIONS DOWN THE ROAD TO UTILIZE THIS?
 }
 
-// Initializes the carrier board for communication
-void Iridium::init()
-{
-	setupBoard(); // enable the correct pins in the correct order
-	//variableInit(); // REMOVE AND JUST ADD INITS AS GLOBALS
-	// CONSIDER ADDING OTHER INITS LIKE TCP/IP STACK?
-}
-
 bool Iridium::ready() { return this->commState == IDLE; }
 
 // Returns the number of bytes available on Serial1
@@ -104,24 +96,6 @@ void Iridium::initializeDialUp()
   this->write("\r\n");
   this->SwitchState(DIALING);
 }
-// Instantiates a separate class for the TCP/IP stack
-void Iridium::createInternetStack()
-{
-
-}
-
-// Wrapper method to write a message to a dial up queue
-void Iridium::writeDialUpWrapper()
-{
-
-}
-
-// Wrapper method to send any queued up data via the dial up connection
-void Iridium::sendDialUpWrapper()
-{
-
-}
-
 
 // MICHAEL's
 // writes directly to Iridium modem.
@@ -184,20 +158,19 @@ void Iridium::ProcessResponse(String response) {
 
   String messageHolder[20];
 
-  for (int i = 0; i < 20; i++){
-    messageHolder[i] = "";
-  }
-
-  int MessagePos = 0;
   int responseSize = response.length();
   int numMessages = 0;
   for (int i = 0; i < responseSize; i++){
-    String message = "";
-    while(response[i] != '\r'){
-      message += response[i++];
+    if(response[i] != '\r'){
+      String message = "";
+      while(response[i] != '\r'){
+        message += response[i++];
+      }
+      i++;
+      messageHolder[numMessages++] = message;
+    }else{
+      i++;
     }
-    i++;
-    messageHolder[numMessages++] = message;
   }
 
   for(int i = 0; i < numMessages; i++) {
@@ -224,26 +197,27 @@ void Iridium::ProcessResponse(String response) {
     }
     else if(messageHolder[i].indexOf("SBDI:") > -1) {
       SerialUSB.println("Got SBDI");
-      /*
-       * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
-          where:
-          <MO status>:
-            MO session status provides an indication of the disposition of the mobile originated transaction.
-            The field can take on the following values:
-            0: No SBD message to send from the ISU.
-            1: SBD message successfully sent from the ISU to the ESS.
-            2: An error occurred while attempting to send SBD message from ISU to ESS.
-          
-          <MT status>:
-            The MT status provides an indication of the disposition of the mobile terminated transaction. The
-            field can take on the following values:
-            0: No SBD message to receive from the ESS.
-            1: SBD message successfully received from the ESS.
-            2: An error occurred while attempting to perform a mailbox check or receive a message
-            from the ESS.
-       */
-      // check MO status ( == 1 ? message sent. == 2 ? error; try again?)
-      // check MT status ( == 1 ? message received; now call SBDRT.)
+      String MO, MT;
+      int pos = messageHolder[i].indexOf(':') + 2;
+      MO = messageHolder[i]][pos];
+      pos+=2;
+      while(messageHolder[i][pos] != ','){
+        pos++;
+      }
+      pos+=2;
+      MT = messageHolder[i][pos];
+
+      if (MO == '2' || MT == '2'){
+        SerialUSB.println("Error with SBD message");
+        SerialUSB.println("Issuing SBDI command");
+        this->write("AT+SBDI\r\n");
+      }else if (MT == '1'){
+        SerialUSB.println("Issuing SBDRT command");
+        this->write("AT+SBDRT\r\n");
+      }else{
+        SerialUSB.println("SBDI successful");
+        this->commState = IDLE;
+      }
       this->SwitchState(IDLE);
     }
     else if(messageHolder[i].indexOf("CONNECT") > -1) {
