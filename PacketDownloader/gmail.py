@@ -40,10 +40,10 @@ import os.path
 import base64
 
 '''
- authorization scope:  we probably want read only.
+ authorization scope.  we want modify, to both read and mark as read..  
  see other scopes here:  https://developers.google.com/gmail/api/auth/scopes
  '''
-scopes = ['https://www.googleapis.com/auth/gmail.readonly']
+scopes = ['https://www.googleapis.com/auth/gmail.modify']
 
 
 """
@@ -90,12 +90,14 @@ def get_credentials():
         with open('token.pickle','wb') as token:
             pickle.dump(creds,token)
     service = build('gmail','v1',credentials=creds)
+    print('user authorized')
     return service
     
 # using service object returned in previous function,
 # this returns the message IDs of all unread e-mails from iridium that have an attachment.
 # we will also want to mark every message as 'read' after the attachment is downloaded.
 def NewMessages(service):
+    print('querying inbox')
     response = service.users().messages().list(userId='me',q='from:sbdservice@sbd.iridium.com is:unread has:attachment').execute()
 
     messages = []
@@ -113,6 +115,9 @@ def GetAttachment(service, msg_id):
     message = service.users().messages().get(userId='me',id=msg_id).execute()
 
     for part in message['payload']['parts']:
+        if(part['mimeType'] == 'text/plain'):
+            bodyData = base64.urlsafe_b64decode(part['body']['data'].encode('UTF-8'))
+        print(part)
         if part['filename']:
             attId = part['body']['attachmentId']
             attachment = service.users().messages().attachments().get(userId='me',messageId=msg_id,id=attId).execute()
@@ -120,4 +125,11 @@ def GetAttachment(service, msg_id):
             path = os.path.join(packets_dir,part['filename'])
             with open(path,'w') as f:
                 f.write(attData)
+            if(bodyData):
+                path = os.path.join(packets_dir,part['filename']+'.txt')
+                with open(path,'w') as f:
+                    f.write(bodyData)
+            print('message downloaded to '+str(path))
+
+    service.users().messages().modify(userId='me',id=msg_id,body={'removeLabelIds':['UNREAD'],'addLabelIds':[]}).execute()
 
