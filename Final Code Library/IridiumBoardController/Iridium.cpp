@@ -176,20 +176,19 @@ void Iridium::ProcessResponse(String response) {
 
   String messageHolder[20];
 
-  for (int i = 0; i < 20; i++){
-    messageHolder[i] = "";
-  }
-
-  int MessagePos = 0;
   int responseSize = response.length();
   int numMessages = 0;
   for (int i = 0; i < responseSize; i++){
-    String message = "";
-    while(response[i] != '\r'){
-      message += response[i++];
+    if(response[i] != '\r'){
+      String message = "";
+      while(response[i] != '\r'){
+        message += response[i++];
+      }
+      i++;
+      messageHolder[numMessages++] = message;
+    }else{
+      i++;
     }
-    i++;
-    messageHolder[numMessages++] = message;
   }
 
   for(int i = 0; i < numMessages; i++) {
@@ -216,6 +215,28 @@ void Iridium::ProcessResponse(String response) {
     }
     else if(messageHolder[i].indexOf("SBDI:") > -1) {
       SerialUSB.println("Got SBDI");
+      String MO, MT;
+      int pos = messageHolder[i].indexOf(':') + 2;
+      MO = messageHolder[i]][pos];
+      pos+=2;
+      while(messageHolder[i][pos] != ','){
+        pos++;
+      }
+      pos+=2;
+      MT = messageHolder[i][pos];
+
+      if (MO == '2' || MT == '2'){
+        SerialUSB.println("Error with SBD message");
+        SerialUSB.println("Issuing SBDI command");
+        this->write("AT+SBDI\r\n");
+      }else if (MT == '1'){
+        SerialUSB.println("Issuing SBDRT command");
+        this->write("AT+SBDRT\r\n");
+      }else{
+        SerialUSB.println("SBDI successful");
+        this->commState = IDLE;
+      }
+      
       /*
        * +SBDI:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MT queued>
           where:
