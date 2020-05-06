@@ -1,7 +1,7 @@
 // Team F.I.R.E. - University of Idaho Computer Science (2019-2020)
 // File: Iridium.h
 // Functionality: Library for handling the Iridium class and its associated communication
-// 		          functionality via SBD (Short Burst Data) and real time dial up data transfer.			  
+//                functionality via SBD (Short Burst Data) and real time dial up data transfer.			  
 
 #ifndef IRIDIUM_H
 #define IRIDIUM_H
