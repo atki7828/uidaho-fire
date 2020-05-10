@@ -10,6 +10,8 @@ The following activity diagram displays how the system should work to apply all 
 
 ![Data Flow Diagram that shows how the system should work to accomplish all goals.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Activity%20Diagram%20V2%20-%20White%20Background.png?raw=true "Activity Data Flow Diagram")
 
+The following class diagram shows our modular approach to accomplishing our goals listed above. The main class controls the Iridium-9523 functionality and the second class helps the Iridium accomplish security through AES-128 bit encryption and decryption functionality.
+
 ![Class Diagram that shows our modular design and how the cryptosystem works with the Iridium class.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Class%20Diagram%20V3.png?raw=true "UML Class Diagram")
 
 ## Notes
