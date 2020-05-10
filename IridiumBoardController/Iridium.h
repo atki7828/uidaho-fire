@@ -21,6 +21,7 @@
 #include <Arduino.h>
 #include <SparkFunSX1509.h>
 #include <string.h>
+#include "Crypto.h"
 
 // Pins we have to enable - Listed in the order they are enabled
 #define fiveV_EN        0
@@ -42,7 +43,7 @@ class Iridium
 {
 public:
     Iridium(); 
-    void setupBoard();
+    void setupBoard(bool enableEncryption, Crypto newCrypto);
     void InitSBDWrite(String outgoingMessage);
     void writeSBD(); 
     void write(String str);
@@ -57,6 +58,8 @@ private:
     static String CSQ;
     static int baud;
     String OutgoingMessage;
+    bool isEncryptionEnabled;
+    Crypto crypto;
     communicationState commState;
     byte* StringToByte(String);
     byte* checksum(byte[],int);   

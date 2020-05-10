@@ -26,9 +26,12 @@
 
 // Libraries:
 #include "Iridium.h"
+#include "Crypto.h"
 #include <SparkFunSX1509.h>
 
 // Global Variables:
+bool isEncryptionEnabled = true; // Set to true to enforce the encryption and decryption of messages
+Crypto crypto; // Instance of the crypto class
 Iridium iridium9523; // Instance of our Iridium class
 String TESInputBuffer;
 
@@ -40,7 +43,7 @@ void setup()
     SerialUSB.begin(9600);
     SerialUSB.println("initializing....");
     delay(2000); // Delay by 1 second to give IDE's serial monitor time to load
-    iridium9523.setupBoard(); // Initialize the carrier board and communication
+    iridium9523.setupBoard(isEncryptionEnabled, crypto); // Initialize the carrier board and communication
 }
 
 

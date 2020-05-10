@@ -29,8 +29,20 @@ Iridium::Iridium()
 }
 
 // Enables the carrier board pins in the correct order
-void Iridium::setupBoard()
+void Iridium::setupBoard(bool enableEncryption, Crypto newCrypto)
 {
+    isEncryptionEnabled = enableEncryption;
+    if(isEncryptionEnabled)
+    {
+        crypto = newCrypto;
+        SerialUSB.print(("Enabling Encryption"));
+    }
+
+    else
+    {
+        SerialUSB.print(("No Encryption"));
+    }
+
     TESSer.begin(baud);
     IridiumSer.begin(baud);
     SerialUSB.begin(baud);
@@ -70,15 +82,36 @@ void Iridium::setupBoard()
 
 // send SBDWB with message length as parameter.
 // iridium should then respond with READY.
-void Iridium::InitSBDWrite(String outgoingMessage) {
-    this->OutgoingMessage = outgoingMessage;
-    this->switchState(WRITING);
-    SerialUSB.print("writing sbd:");
-    SerialUSB.println(outgoingMessage);
-    SerialUSB.println("converting to byte array");
-    this->write("AT+SBDWB=");
-    this->write(outgoingMessage.length());
-    this->write("\r\n");
+void Iridium::InitSBDWrite(String outgoingMessage) 
+{
+    // If encryption is enabled, we need to find theoretical length after encryption
+    if(isEncryptionEnabled)
+    {
+        this->OutgoingMessage = outgoingMessage;
+        this->switchState(WRITING);
+        SerialUSB.print("writing sbd:");
+        SerialUSB.println(outgoingMessage);
+        SerialUSB.println("converting to byte array");
+        this->write("AT+SBDWB=");
+        // FIND NEW LENGTH AFTER ENCRYPTION
+        int originalStrLength = outgoingMessage.length(); // find original string length
+        int extraPaddingNum = 16 - (originalStrLength % 16); // Finds the number of paddings we need if any
+        int finalStrLength = originalStrLength + extraPaddingNum;
+        this->write(finalStrLength);
+        this->write("\r\n");
+    }
+
+    else
+    {
+        this->OutgoingMessage = outgoingMessage;
+        this->switchState(WRITING);
+        SerialUSB.print("writing sbd:");
+        SerialUSB.println(outgoingMessage);
+        SerialUSB.println("converting to byte array");
+        this->write("AT+SBDWB=");
+        this->write(outgoingMessage.length());
+        this->write("\r\n");
+    }
 }
 
 // Send output message and checksum to SBD buffer
@@ -89,12 +122,34 @@ void Iridium::writeSBD()
     SerialUSB.println(this->OutgoingMessage);
     SerialUSB.println("converting to byte array");
     byte* OutgoingData = StringToByte(this->OutgoingMessage);
-    for(int i = 0; i < this->OutgoingMessage.length()+2; i++) {
-      SerialUSB.print("sending byte ");
-      SerialUSB.println(OutgoingData[i],HEX);
-      IridiumSer.write(OutgoingData[i]);
-      delay(10);
-    }    
+
+    // If encryption is enabled, encrypt our outgoing message
+    if(isEncryptionEnabled)
+    {
+        uint8_t* encryptedMessage = crypto.encrypt_cbc((uint8_t*)OutgoingData);
+        delay(5);
+
+        for(int i = 0; i < this->OutgoingMessage.length()+2; i++) 
+        {
+            SerialUSB.print("sending encrypted byte ");
+            SerialUSB.println(encryptedMessage[i],HEX);
+            IridiumSer.write(encryptedMessage[i]);
+            delay(10);
+            free(encryptedMessage); // Release allocated memory from encryption
+        }   
+    }
+
+    // If encryption is not enabled, send as plaintext in byte format
+    else
+    {
+        for(int i = 0; i < this->OutgoingMessage.length()+2; i++) 
+        {
+            SerialUSB.print("sending byte ");
+            SerialUSB.println(OutgoingData[i],HEX);
+            IridiumSer.write(OutgoingData[i]);
+            delay(10);
+        }   
+    } 
 }
 
 byte* Iridium::StringToByte(String s) 
@@ -210,7 +265,7 @@ void Iridium::processResponse(String response)
 
     for(int i = 0; i < numMessages; i++) 
     {
-      // READY -> iridium is now waiting for binary message ( + checksum)
+        // READY -> iridium is now waiting for binary message ( + checksum)
         if(messageHolder[i].indexOf("READY") > -1) {
           SerialUSB.println("Got READY");
           switch(this->commState) {
