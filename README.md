@@ -10,7 +10,7 @@ The following activity diagram displays how the system should work to apply all 
 
 ![Data Flow Diagram that shows how the system should work to accomplish all goals.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Activity%20Diagram%20-%20Transparent%20V2.png?raw=true "Activity Data Flow Diagram")
 
-![Class Diagram that shows our modular design and how the cryptosystem works with the Iridium class.](Documents/FIRE - Class Diagram - Transparent V3.png?raw=true "UML Class Diagram")
+![Class Diagram that shows our modular design and how the cryptosystem works with the Iridium class.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Class%20Diagram%20-%20Transparent%20V3.pngv?raw=true "UML Class Diagram")
 
 ## Notes
 
