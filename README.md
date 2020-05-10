@@ -8,9 +8,9 @@ The goal of this software is to program a microcontroller onboard a custom carri
 
 The following activity diagram displays how the system should work to apply all of these goals within our system cycle. The actual code provided here accomplishes the majority of this system aside from the areas listed in the Notes section below.
 
-![Data Flow Diagram that shows how the system should work to accomplish all goals.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Activity%20Diagram%20-%20Transparent%20V2.png?raw=true "Activity Data Flow Diagram")
+![Data Flow Diagram that shows how the system should work to accomplish all goals.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Activity%20Diagram%20V2%20-%20White%20Background.png?raw=true "Activity Data Flow Diagram")
 
-![Class Diagram that shows our modular design and how the cryptosystem works with the Iridium class.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Class%20Diagram%20-%20Transparent%20V3.pngv?raw=true "UML Class Diagram")
+![Class Diagram that shows our modular design and how the cryptosystem works with the Iridium class.](https://github.com/atki7828/uidaho-fire/blob/master/Documents/FIRE%20-%20Class%20Diagram%20V3.png?raw=true "UML Class Diagram")
 
 ## Notes
 
