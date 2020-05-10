@@ -97,6 +97,41 @@ void Iridium::writeSBD()
     }    
 }
 
+byte* Iridium::StringToByte(String s) 
+{
+    byte* bytes = new byte[s.length()+2];
+    for(int i = 0; i < s.length(); i++) 
+    {
+        bytes[i] = (byte)s[i];
+    }
+    byte* cs = checksum(bytes,s.length());
+    bytes[s.length()] = cs[0];
+    bytes[s.length()+1] = cs[1];
+    SerialUSB.print("byte array:");
+    for(int i = 0; i < s.length()+2; i++) 
+    {
+        SerialUSB.print(bytes[i],HEX);
+        SerialUSB.print(" ");
+    }
+    return bytes;
+}
+
+byte* Iridium::checksum(byte str[], int len) 
+{
+    int val = 0;
+    for(int i = 0; i < len; i++) 
+    {
+        val += str[i];
+    }
+    byte* checksum = new byte[2];
+    checksum[0] = val >> 8;
+    checksum[1] = val & 0xff;
+    for(int i = 0; i < len; i++) 
+    {
+        
+    }
+    return checksum;
+}
 
 // Writes directly to Iridium modem
 // In order to use in context of AT commands,
@@ -297,32 +332,4 @@ String Iridium::statename(communicationState state)
     }
 }
 
-byte* Iridium::StringToByte(String s) {
-  byte* bytes = new byte[s.length()+2];
-  for(int i = 0; i < s.length(); i++) {
-    bytes[i] = (byte)s[i];
-  }
-  byte* cs = checksum(bytes,s.length());
-  bytes[s.length()] = cs[0];
-  bytes[s.length()+1] = cs[1];
-  SerialUSB.print("byte array:");
-  for(int i = 0; i < s.length()+2; i++) {
-    SerialUSB.print(bytes[i],HEX);
-    SerialUSB.print(" ");
-  }
-  return bytes;
-}
 
-byte* Iridium::checksum(byte str[], int len) {
-  int val = 0;
-  for(int i = 0; i < len; i++) {
-    val += str[i];
-  }
-  byte* checksum = new byte[2];
-  checksum[0] = val >> 8;
-  checksum[1] = val & 0xff;
-  for(int i = 0; i < len; i++) {
-    
-  }
-  return checksum;
-}

@@ -43,6 +43,7 @@ class Iridium
 public:
     Iridium(); 
     void setupBoard();
+    void InitSBDWrite(String outgoingMessage);
     void writeSBD(); 
     void write(String str);
     void write(int);
@@ -51,15 +52,14 @@ public:
     bool ready(); 
     void processResponse(String str); 
     void initializeDialUp();
-    byte* checksum(byte[],int);
-    byte* StringToByte(String);
-    void InitSBDWrite(String outgoingMessage);
 private:
     static SX1509 sx1509;
     static String CSQ;
     static int baud;
     String OutgoingMessage;
     communicationState commState;
+    byte* StringToByte(String);
+    byte* checksum(byte[],int);   
     void initiateSession();
     void switchState(communicationState state);
     static String statename(communicationState state);
