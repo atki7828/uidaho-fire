@@ -58,6 +58,7 @@ private:
     static String CSQ;
     static int baud;
     String OutgoingMessage;
+    byte* OutgoingData;
     bool isEncryptionEnabled;
     Crypto crypto;
     communicationState commState;

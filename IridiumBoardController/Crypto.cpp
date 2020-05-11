@@ -451,7 +451,11 @@ uint8_t* Crypto::encrypt_cbc(uint8_t* incomingMessage)
     // Encrypt the plaintext message and store its value in our ciphertext Byte array
     AES_CBC_encrypt_buffer(&ctx, ciphertext, cipherTextLength);
 
-    SerialUSB.print("Encrypted Ciphertext: "); SerialUSB.println((char*)ciphertext);
+    SerialUSB.println("Encrypted Ciphertext: ");
+    for(int i = 0; i < cipherTextLength; i++) {
+      SerialUSB.print (ciphertext[i],HEX);
+      SerialUSB.print(" ");
+    }
 
     return ciphertext; // Returns the hex version of our ciphertext
 }

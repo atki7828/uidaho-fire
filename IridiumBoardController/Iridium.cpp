@@ -84,34 +84,29 @@ void Iridium::setupBoard(bool enableEncryption, Crypto newCrypto)
 // iridium should then respond with READY.
 void Iridium::InitSBDWrite(String outgoingMessage) 
 {
+    this->OutgoingMessage = outgoingMessage;
+    this->switchState(WRITING);
+    SerialUSB.print("writing sbd:");
+    SerialUSB.println(outgoingMessage);
+    SerialUSB.println("converting to byte array");
+    this->OutgoingData = StringToByte(this->OutgoingMessage);
+    int len;
     // If encryption is enabled, we need to find theoretical length after encryption
     if(isEncryptionEnabled)
     {
-        this->OutgoingMessage = outgoingMessage;
-        this->switchState(WRITING);
-        SerialUSB.print("writing sbd:");
-        SerialUSB.println(outgoingMessage);
-        SerialUSB.println("converting to byte array");
-        this->write("AT+SBDWB=");
         // FIND NEW LENGTH AFTER ENCRYPTION
         int originalStrLength = outgoingMessage.length(); // find original string length
         int extraPaddingNum = 16 - (originalStrLength % 16); // Finds the number of paddings we need if any
-        int finalStrLength = originalStrLength + extraPaddingNum;
-        this->write(finalStrLength);
-        this->write("\r\n");
+        len = originalStrLength + extraPaddingNum;
     }
 
     else
     {
-        this->OutgoingMessage = outgoingMessage;
-        this->switchState(WRITING);
-        SerialUSB.print("writing sbd:");
-        SerialUSB.println(outgoingMessage);
-        SerialUSB.println("converting to byte array");
-        this->write("AT+SBDWB=");
-        this->write(outgoingMessage.length());
-        this->write("\r\n");
+      len = outgoingMessage.length();
     }
+    this->write("AT+SBDWB=");
+    this->write(len);
+    this->write("\r\n");
 }
 
 // Send output message and checksum to SBD buffer
@@ -120,23 +115,31 @@ void Iridium::writeSBD()
     this->switchState(WRITING);
     SerialUSB.print("writing sbd:");
     SerialUSB.println(this->OutgoingMessage);
-    SerialUSB.println("converting to byte array");
-    byte* OutgoingData = StringToByte(this->OutgoingMessage);
-
+    
     // If encryption is enabled, encrypt our outgoing message
     if(isEncryptionEnabled)
     {
-        uint8_t* encryptedMessage = crypto.encrypt_cbc((uint8_t*)OutgoingData);
+        byte* encryptedMessage = crypto.encrypt_cbc((byte*)this->OutgoingData);
+        
         delay(5);
-
-        for(int i = 0; i < this->OutgoingMessage.length()+2; i++) 
+        int originalStrLength = this->OutgoingMessage.length(); // find original string length
+        int extraPaddingNum = 16 - (originalStrLength % 16); // Finds the number of paddings we need if any
+        int len = originalStrLength + extraPaddingNum;
+        byte* cs = checksum(encryptedMessage,len);
+        for(int i = 0; i < len; i++) 
         {
             SerialUSB.print("sending encrypted byte ");
             SerialUSB.println(encryptedMessage[i],HEX);
             IridiumSer.write(encryptedMessage[i]);
             delay(10);
-            free(encryptedMessage); // Release allocated memory from encryption
-        }   
+        }
+            SerialUSB.print("sending checksum: ");
+            SerialUSB.println(cs[0]);
+            SerialUSB.println(cs[1]);
+            IridiumSer.write(cs[0]);
+            IridiumSer.write(cs[1]);
+        
+        free(encryptedMessage); // Release allocated memory from encryption   
     }
 
     // If encryption is not enabled, send as plaintext in byte format
@@ -145,8 +148,8 @@ void Iridium::writeSBD()
         for(int i = 0; i < this->OutgoingMessage.length()+2; i++) 
         {
             SerialUSB.print("sending byte ");
-            SerialUSB.println(OutgoingData[i],HEX);
-            IridiumSer.write(OutgoingData[i]);
+            SerialUSB.println(this->OutgoingData[i],HEX);
+            IridiumSer.write(this->OutgoingData[i]);
             delay(10);
         }   
     } 
@@ -154,14 +157,11 @@ void Iridium::writeSBD()
 
 byte* Iridium::StringToByte(String s) 
 {
-    byte* bytes = new byte[s.length()+2];
+    byte* bytes = new byte[s.length()];
     for(int i = 0; i < s.length(); i++) 
     {
         bytes[i] = (byte)s[i];
     }
-    byte* cs = checksum(bytes,s.length());
-    bytes[s.length()] = cs[0];
-    bytes[s.length()+1] = cs[1];
     SerialUSB.print("byte array:");
     for(int i = 0; i < s.length()+2; i++) 
     {
@@ -386,5 +386,3 @@ String Iridium::statename(communicationState state)
             return "";
     }
 }
-
-
