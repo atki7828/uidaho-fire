@@ -113,31 +113,33 @@ void Iridium::InitSBDWrite(String outgoingMessage)
 void Iridium::writeSBD()
 {
     this->switchState(WRITING);
-    SerialUSB.print("writing sbd:");
+    SerialUSB.print("writing sbd: ");
     SerialUSB.println(this->OutgoingMessage);
     
     // If encryption is enabled, encrypt our outgoing message
     if(isEncryptionEnabled)
     {
-        byte* encryptedMessage = crypto.encrypt_cbc((byte*)this->OutgoingData);
-        
+        byte* encryptedMessage = crypto.encrypt_cbc((byte*)this->OutgoingData); // Encrypts data
         delay(5);
-        int originalStrLength = this->OutgoingMessage.length(); // find original string length
-        int extraPaddingNum = 16 - (originalStrLength % 16); // Finds the number of paddings we need if any
-        int len = originalStrLength + extraPaddingNum;
-        byte* cs = checksum(encryptedMessage,len);
+
+        int originalStrLength = this->OutgoingMessage.length(); // Find original string length
+        int extraPaddingNum = 16 - (originalStrLength % 16); // Number of padding Bytes needed if any
+        int len = originalStrLength + extraPaddingNum; // Calculates total length of final message to be sent
+        byte* cs = checksum(encryptedMessage,len); // Calculate checksum with encrypted message
+
         for(int i = 0; i < len; i++) 
         {
-            SerialUSB.print("sending encrypted byte ");
+            SerialUSB.print("sending encrypted byte: ");
             SerialUSB.println(encryptedMessage[i],HEX);
             IridiumSer.write(encryptedMessage[i]);
             delay(10);
         }
-            SerialUSB.print("sending checksum: ");
-            SerialUSB.println(cs[0]);
-            SerialUSB.println(cs[1]);
-            IridiumSer.write(cs[0]);
-            IridiumSer.write(cs[1]);
+        
+        SerialUSB.print("sending checksum: ");
+        SerialUSB.println(cs[0]);
+        SerialUSB.println(cs[1]);
+        IridiumSer.write(cs[0]);
+        IridiumSer.write(cs[1]);
         
         free(encryptedMessage); // Release allocated memory from encryption   
     }
@@ -200,8 +202,9 @@ void Iridium::write(String str)
     IridiumSer.print(str);
 }
 
-void Iridium::write(int i) {
-  IridiumSer.print(i);
+void Iridium::write(int i) 
+{
+    IridiumSer.print(i);
 }
 
 // Initiates a session with the satellite network - Sends the SBD message
@@ -266,16 +269,18 @@ void Iridium::processResponse(String response)
     for(int i = 0; i < numMessages; i++) 
     {
         // READY -> iridium is now waiting for binary message ( + checksum)
-        if(messageHolder[i].indexOf("READY") > -1) {
-          SerialUSB.println("Got READY");
-          switch(this->commState) {
-            case WRITING:
-            this->writeSBD();
-            break;
-            default:
-            this->commState = IDLE;
-            break;
-          }
+        if(messageHolder[i].indexOf("READY") > -1) 
+        {
+            SerialUSB.println("Got READY");
+            switch(this->commState) 
+            {
+                case WRITING:
+                this->writeSBD();
+                break;
+                default:
+                this->commState = IDLE;
+                break;
+            }
         }
         if(messageHolder[i].indexOf("OK") > -1) 
         {
@@ -316,14 +321,19 @@ void Iridium::processResponse(String response)
             MT = messageHolder[i][pos];
             SerialUSB.println("mo: " + MO);
             SerialUSB.println("mt: " + MT);
-            if (MO == "2" || MT == "2"){
+            if (MO == "2" || MT == "2")
+            {
                 SerialUSB.println("Error with SBD message");
                 SerialUSB.println("Issuing SBDI command");
                 this->write("AT+SBDI\r\n");
-            }else if (MT == "1"){
+            }
+            else if (MT == "1")
+            {
                 SerialUSB.println("Issuing SBDRT command");
                 this->write("AT+SBDRT\r\n");
-            }else{
+            }
+            else
+            {
                 SerialUSB.println("SBDI successful");
                 this->commState = IDLE;
             }
@@ -360,8 +370,7 @@ void Iridium::initializeDialUp()
 // Switches the state of the modem
 void Iridium::switchState(communicationState state) 
 {
-    SerialUSB.println("state switched from " + statename(this->commState) 
-        + " to " + statename(state));
+    SerialUSB.println("state switched from " + statename(this->commState) + " to " + statename(state));
     this->commState = state;
 }
 

@@ -267,14 +267,14 @@ void Crypto::InvSubBytes(state_t* state)
     0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
     0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
     0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
-    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d };
+    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d};
     uint8_t i, j;
     
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-        (*state)[j][i] = getSBoxInvert((*state)[j][i]);
+            (*state)[j][i] = getSBoxInvert((*state)[j][i]);
         }
     }
 }
@@ -431,6 +431,14 @@ uint8_t* Crypto::encrypt_cbc(uint8_t* incomingMessage)
         // Pad the string if it is not a multiple
         ciphertext = padString((uint8_t*)plaintext);
         cipherTextLength = strlen((char*)ciphertext);
+
+        SerialUSB.println("Padded Plaintext: ");
+        for(int i = 0; i < cipherTextLength; i++) 
+        {
+            SerialUSB.print (ciphertext[i], HEX);
+            SerialUSB.print(" ");
+        }
+        SerialUSB.println("");
     }
 
     // Handles case where length is a multiple of 16
@@ -452,10 +460,15 @@ uint8_t* Crypto::encrypt_cbc(uint8_t* incomingMessage)
     AES_CBC_encrypt_buffer(&ctx, ciphertext, cipherTextLength);
 
     SerialUSB.println("Encrypted Ciphertext: ");
-    for(int i = 0; i < cipherTextLength; i++) {
-      SerialUSB.print (ciphertext[i],HEX);
-      SerialUSB.print(" ");
+    for(int i = 0; i < cipherTextLength; i++) 
+    {
+        SerialUSB.print (ciphertext[i], HEX);
+        SerialUSB.print(" ");
     }
+    SerialUSB.println("");
+
+    SerialUSB.print("Length of encrypted ciphertext: ");
+    SerialUSB.println(cipherTextLength);
 
     return ciphertext; // Returns the hex version of our ciphertext
 }
@@ -489,7 +502,9 @@ uint8_t* Crypto::decrypt_cbc(uint8_t *ciphertext)
     plainTextLength = strlen((char*)plaintext);
 
     unpaddedPlaintext = removeStringPadding(plaintext); // Unpad the string and return the result
-    SerialUSB.print("Decypted Plaintext: "); SerialUSB.println((char*)unpaddedPlaintext);
+
+    //SerialUSB.print("Decypted Plaintext: "); SerialUSB.println((char*)unpaddedPlaintext);
+
 	return unpaddedPlaintext; // Indicates program did exit properly 
 }
 
@@ -521,6 +536,7 @@ void Crypto::trimMessage(uint8_t* str)
 // Returns the size of the new Byte array
 uint8_t* Crypto::padString(uint8_t* str)
 {
+
     // Local Variables:
     int originalStrLength = strlen((char*)str); // Keeps track of the incoming string length
     int extraPaddingNum = 16 - (originalStrLength % 16); // Finds the number of paddings we need
@@ -531,8 +547,12 @@ uint8_t* Crypto::padString(uint8_t* str)
     uint8_t* returnStr = (uint8_t*)malloc((newStrLength) * sizeof(uint8_t) + 1); 
     if(returnStr == NULL)
     {
-        exit(1);
+        return null;
     }
+
+    SerialUSB.print("String requires padding - Adding ");
+    SerialUSB.print(extraPaddingNum);
+    SerialUSB.println(" Bytes");
 
     // Initialize return string with old string data
     int j = 0;
