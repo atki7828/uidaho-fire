@@ -22,4 +22,4 @@ The cryptosystem is implemented and works on a Windows basec computer. However, 
 
 ## Additional Information
 
-For more information on our background research, goals, design choices, validation of a working program, and general information on what the rest of our capstone team completed, visit our Wikipedia page at INSERT LINK HERE.
+For more information on our background research, goals, design choices, validation of a working program, and general information on what the rest of our capstone team completed, visit our Wikipedia page at [Wiki Page](http://mindworks.shoutwiki.com/wiki/NASA_Suborbital_Flight_Communication_and_Fire_Box).
