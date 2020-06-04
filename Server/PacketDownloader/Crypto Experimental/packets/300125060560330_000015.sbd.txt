@@ -1,0 +1,10 @@
+MOMSN: 15
+MTMSN: 0
+Time of Session (UTC): Wed May  6 18:18:08 2020
+Session Status: 00 - Transfer OK
+Message Size (bytes): 5
+
+Unit Location: Lat = 46.64780 Long = -117.61730
+CEPradius = 680
+
+
